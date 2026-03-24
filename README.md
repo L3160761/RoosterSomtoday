@@ -2,5 +2,5 @@
 
 
 
-project van Tom, Floris, Zine-Edinne, Rekawt
+project van Tom, Floris, Zine-Eddine, Rekawt
 
