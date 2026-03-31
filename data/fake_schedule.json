@@ -1,0 +1,21 @@
+{
+  "schedules": [
+    {
+      "user_id": "user1",
+      "schedule": [
+        { "date": "2026-03-31", "time": "08:00:00", "activity": "Meeting with team" },
+        { "date": "2026-03-31", "time": "10:00:00", "activity": "Work on project A" },
+        { "date": "2026-03-31", "time": "12:00:00", "activity": "Lunch Break" },
+        { "date": "2026-03-31", "time": "13:00:00", "activity": "Client Call" }
+      ]
+    },
+    {
+      "user_id": "user2",
+      "schedule": [
+        { "date": "2026-03-31", "time": "09:00:00", "activity": "Team Standup" },
+        { "date": "2026-03-31", "time": "11:00:00", "activity": "Work on project B" },
+        { "date": "2026-03-31", "time": "14:00:00", "activity": "Review Code" }
+      ]
+    }
+  ]
+}
