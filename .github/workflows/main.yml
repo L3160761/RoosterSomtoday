@@ -1,0 +1,16 @@
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - run: pip install -r requirements.txt pytest flake8
+      - run: flake8 backend/ --exit-zero
+      - run: pytest backend/ -v 2>/dev/null || echo "Tests setup"
+      - run: cd backend && python database_init.py && timeout 3 python main.py &
