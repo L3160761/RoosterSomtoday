@@ -85,10 +85,11 @@
         const scanButton = document.getElementById('scanButton');
         const scheduleDisplay = document.getElementById('scheduleDisplay');
         const errorDisplay = document.getElementById('errorDisplay');
-        const fallbackProtocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
-        const FALLBACK_SCAN_API_URL = `${fallbackProtocol}//localhost:8000/api/scan`;
+        const isHttpProtocol = window.location.protocol === 'http:' || window.location.protocol === 'https:';
+        const currentProtocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+        const FALLBACK_SCAN_API_URL = `${currentProtocol}//localhost:8000/api/scan`;
         const SCAN_API_URL = window.SCAN_API_URL
-            || ((window.location.protocol === 'http:' || window.location.protocol === 'https:')
+            || (isHttpProtocol
                 ? '/api/scan'
                 : FALLBACK_SCAN_API_URL);
         const DEFAULT_TIMEOUT_SECONDS = 45;
@@ -190,7 +191,7 @@
                 const timeoutSeconds = validateTimeout(data.ui?.timeout_seconds);
                 standbyTimeoutId = setTimeout(showStandby, timeoutSeconds * 1000);
             } catch (e) {
-                console.error('Scan mislukt', { message: e?.message });
+                console.error('Scan failed', { message: e?.message });
                 showError('Backend niet bereikbaar');
             } finally {
                 scanButton.disabled = false;
