@@ -88,5 +88,14 @@ Screen-ready JSON bevat: student_display, date, now, next, today, ui
 ## 👥 Team
 Ontwikkelaars: Tom, Floris, Zine-Eddine, Rekawt
 
+## 📚 Documentatie
+
+Uitgebreide documentatie staat in de [`docs/`](docs/) map:
+
+- [`docs/overzicht.md`](docs/overzicht.md) — Wat het project is en hoe het werkt
+- [`docs/architectuur.md`](docs/architectuur.md) — Architectuur, componenten en datastromen
+- [`docs/status.md`](docs/status.md) — Wat af is, wat ontbreekt en bekende inconsistenties
+- [`docs/vervolgstappen.md`](docs/vervolgstappen.md) — Concrete geprioriteerde vervolgstappen
+
 ## 📝 Licentie
 School project - Vrij gebruik
