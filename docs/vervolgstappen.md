@@ -1,66 +1,27 @@
 # Vervolgstappen — RFID Roosterscherm
 
-Dit document beschrijft de concrete vervolgstappen voor het project, gesorteerd op prioriteit. Begin bij stap 1 en werk naar beneden.
+Dit document is de actuele combinatie van **status + roadmap** voor het leerlingteam.
 
 ---
 
-## Stap 1 — Database-initialisatie repareren ⚡ HOOGSTE PRIORITEIT
+## Samenvatting status
 
-**Waarom:** Zonder dit werkt de backend helemaal niet. Dit is de grootste blokkade.
+- ✅ **Stap 1 t/m 3 zijn gerealiseerd als milestones in de huidige repository**.
+- ⏳ **Stap 4 t/m 8 staan open** en vormen de vervolgfase naar een werkende hardware-opstelling op school.
 
-**Wat moet er gebeuren:**
+---
 
-Herschrijf `backend/database_init.py` zodat het de juiste database aanmaakt:
+## Stap 1 — Database-initialisatie repareren ✅ Gerealiseerd
 
-```python
-import sqlite3
-import os
+**Doel**  
+De backend laten werken met de juiste SQLite-structuur (`data/rooster.db`, tabellen `tags` en `students`).
 
-os.makedirs("data", exist_ok=True)
+**Opgeleverd**
+- `backend/database_init.py` maakt nu `data/rooster.db` aan
+- Tabellen `tags` en `students` worden aangemaakt
+- Testdata met drie testtags is aanwezig
 
-conn = sqlite3.connect("data/rooster.db")
-cursor = conn.cursor()
-
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS tags (
-        tag_uid TEXT PRIMARY KEY,
-        user_key TEXT NOT NULL,
-        active INTEGER DEFAULT 1
-    )
-''')
-
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS students (
-        user_key TEXT PRIMARY KEY,
-        display_name TEXT NOT NULL
-    )
-''')
-
-# Testdata
-cursor.executemany(
-    "INSERT OR IGNORE INTO tags (tag_uid, user_key, active) VALUES (?, ?, 1)",
-    [
-        ("04A1B23C9F", "wessel"),
-        ("12B4C56D8E", "anna"),
-        ("99Z8Y7X6W5", "thomas"),
-    ]
-)
-
-cursor.executemany(
-    "INSERT OR IGNORE INTO students (user_key, display_name) VALUES (?, ?)",
-    [
-        ("wessel", "Wessel"),
-        ("anna", "Anna"),
-        ("thomas", "Thomas"),
-    ]
-)
-
-conn.commit()
-conn.close()
-print("Database aangemaakt: data/rooster.db")
-```
-
-**Hoe testen:**
+**Hoe testen**
 ```bash
 python backend/database_init.py
 # Verwacht: "Database aangemaakt: data/rooster.db"
@@ -68,181 +29,118 @@ python backend/database_init.py
 
 ---
 
-## Stap 2 — Fake roosterdata aanpassen
+## Stap 2 — Fake roosterdata aanpassen ✅ Gerealiseerd
 
-**Waarom:** Zelfs met een werkende database zal de scan-flow falen als `fake_schedule.json` de verkeerde structuur heeft.
+**Doel**  
+De roosterdata laten aansluiten op het formaat dat de backend verwacht.
 
-**Wat moet er gebeuren:**
+**Opgeleverd**
+- `data/fake_schedule.json` gebruikt nu per `user_key` een `lessons`-lijst
+- Velden `start`, `end`, `subject`, `room`, `teacher`, `status` zijn beschikbaar
 
-Vervang `data/fake_schedule.json` door roosterdata in het formaat dat de backend verwacht:
-
-```json
-{
-  "wessel": {
-    "lessons": [
-      { "start": "08:30", "end": "10:00", "subject": "Nederlands", "room": "A101", "teacher": "Dhr. Jansen", "status": "normal" },
-      { "start": "10:15", "end": "11:45", "subject": "Wiskunde", "room": "B203", "teacher": "Mw. De Vries", "status": "normal" },
-      { "start": "12:30", "end": "14:00", "subject": "Engels", "room": "C105", "teacher": "Dhr. Smith", "status": "normal" }
-    ]
-  },
-  "anna": {
-    "lessons": [
-      { "start": "09:00", "end": "10:30", "subject": "Biologie", "room": "D301", "teacher": "Mw. Bakker", "status": "normal" },
-      { "start": "11:00", "end": "12:30", "subject": "Geschiedenis", "room": "A203", "teacher": "Dhr. Hendriks", "status": "normal" }
-    ]
-  },
-  "thomas": {
-    "lessons": [
-      { "start": "08:30", "end": "10:00", "subject": "Scheikunde", "room": "E102", "teacher": "Dhr. Peters", "status": "normal" },
-      { "start": "13:00", "end": "14:30", "subject": "Sport", "room": "Gymzaal", "teacher": "Mw. Van Dam", "status": "normal" }
-    ]
-  }
-}
-```
-
-**Hoe testen:**
+**Hoe testen**
 ```bash
 curl -X POST http://localhost:8000/api/scan \
   -H "Content-Type: application/json" \
-  -d '{"tag_uid": "04A1B23C9F"}'
-# Verwacht: JSON met rooster van Wessel
+  -d '{"tag_uid":"04A1B23C9F"}'
+# Verwacht: JSON met student_display, today, ui.timeout_seconds
 ```
 
 ---
 
-## Stap 3 — Frontend koppelen aan de backend
+## Stap 3 — Frontend koppelen aan de backend ✅ Gerealiseerd
 
-**Waarom:** De frontend toont nu hardcoded tekst. Er is geen werkende koppeling met de backend.
+**Doel**  
+Een testbare frontend-flow maken die echt de backend (`/api/scan`) aanroept.
 
-**Wat moet er gebeuren:**
+**Opgeleverd**
+- `frontend/index.html` bevat testinvoer voor tag-UID
+- Frontend doet `fetch` naar scan-endpoint
+- Foutmeldingen en timeout-terugval naar standby zijn aanwezig
 
-Pas `frontend/index.html` aan zodat het:
-1. Een invoerveld of knop heeft voor een tag-UID (voor testen)
-2. Een `fetch()` aanroep doet naar `POST /api/scan`
-3. De ontvangen JSON verwerkt en weergeeft:
-   - Naam van de leerling
-   - Huidige les (vak, lokaal, leraar, tijdstip)
-   - Volgende les
-   - Optioneel: volledig dagoverzicht
-4. Een foutmelding toont bij onbekende tag of server-error
-5. Na `timeout_seconds` (uit de API-response) terugkeert naar het standby-scherm
-
-**Minimale implementatie voor testen:**
-
-```javascript
-async function scanTag(tagUid) {
-    try {
-        const response = await fetch('http://localhost:8000/api/scan', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tag_uid: tagUid })
-        });
-        if (!response.ok) {
-            showError('Tag onbekend of rooster niet beschikbaar');
-            return;
-        }
-        const data = await response.json();
-        showSchedule(data);
-        setTimeout(showStandby, data.ui.timeout_seconds * 1000);
-    } catch (e) {
-        showError('Backend niet bereikbaar');
-    }
-}
-```
+**Hoe testen**
+1. Start backend (`python backend/main.py`)
+2. Open `frontend/index.html`
+3. Gebruik testtag `04A1B23C9F`
+4. Verwacht: roosterinformatie zichtbaar, daarna terug naar standby op timeout
 
 ---
 
-## Stap 4 — Hardware-integratie bouwen
+## Stap 4 — Hardware-integratie bouwen ⏳ Open
 
-**Waarom:** Zonder dit moeten scans handmatig worden ingevoerd. Het systeem is pas écht bruikbaar als de RFID-lezer automatisch werkt.
+**Doel**  
+RC522-scans automatisch laten doorgeven aan de backend, zonder handmatige invoer.
 
-**Wat moet er gebeuren:**
-
-Maak een nieuw bestand `backend/rfid_reader.py` (of vergelijkbaar) dat:
-1. De RC522 RFID-lezer uitleest via de `mfrc522` Python-bibliotheek
-2. Bij elke succesvolle scan de tag-UID doorstuurt naar de backend via `requests.post()`
-3. Continu luistert (loop) en fouten netjes afhandelt
-
-**Benodigde bibliotheek:**
-```
-pip install mfrc522
-```
-Voeg toe aan `requirements.txt`.
-
-**Let op:** Dit werkt alleen op een Raspberry Pi met de juiste SPI-configuratie. Testen op een gewone PC is niet mogelijk zonder emulatie.
+**Vervolg**
+1. Maak `backend/rfid_reader.py` met RC522-uitleesloop
+2. Verstuur elke scan naar `POST /api/scan`
+3. Log fouten zonder de scan-loop te stoppen
+4. Test op Raspberry Pi 4B met SPI actief
 
 ---
 
-## Stap 5 — Admin-sleutel naar configuratie verplaatsen
+## Stap 5 — Admin-sleutel naar configuratie verplaatsen ⏳ Open
 
-**Waarom:** De hardcoded `"admin_key_pilot"` in `backend/main.py` is een beveiligingsrisico als de code ooit openbaar wordt of in productie gaat.
+**Doel**  
+Hardcoded admin-sleutel vervangen door configuratie via omgevingvariabelen.
 
-**Wat moet er gebeuren:**
-
+**Vervolg**
 1. Voeg `ADMIN_API_KEY` toe aan `.env.example`
-2. Laad de sleutel via `os.environ` in `main.py`:
-   ```python
-   import os
-   ADMIN_KEY = os.environ.get("ADMIN_API_KEY", "admin_key_pilot")
-   ```
-3. Gebruik `ADMIN_KEY` in de vergelijking in `/api/admin/map`
+2. Lees sleutel in via `os.environ` in `backend/main.py`
+3. Gebruik die sleutel in `/api/admin/map`
+4. Test met juiste en onjuiste sleutel (verwacht 200 vs 401)
 
 ---
 
-## Stap 6 — Rooster-integratie met Somtoday of Zermelo
+## Stap 6 — Rooster-integratie met Somtoday/Zermelo ⏳ Open
 
-**Waarom:** Het systeem heet "RoosterSomtoday" maar gebruikt alleen fake data. Voor echte schoolgebruik is een koppeling met een roosterdienst nodig.
+**Doel**  
+Van fake data naar echte roosterbron voor productiegebruik.
 
-**Wat moet er gebeuren:**
-
-1. Bepaal welke API gebruikt wordt (Somtoday of Zermelo — `.env.example` noemt Zermelo)
-2. Onderzoek de beschikbare API-documentatie en authenticatiemethode
-3. Schrijf een module die roosterdata ophaalt en omzet naar het interne formaat
-4. Voeg caching toe zodat het scherm werkt als de API tijdelijk niet beschikbaar is
-5. Bewaar tokens veilig in `.env`, nooit in de broncode
-
-Dit is de grootste functionele uitbreiding en vraagt waarschijnlijk de meeste tijd.
+**Vervolg**
+1. Keuze maken: Somtoday of Zermelo als primaire bron
+2. API-authenticatie en tokenbeheer uitwerken
+3. Data-omzetter bouwen naar huidig intern roosterformaat
+4. Caching en fallback ontwerpen bij API-storingen
 
 ---
 
-## Stap 7 — Tests toevoegen
+## Stap 7 — Tests toevoegen ⏳ Open
 
-**Waarom:** De CI-pipeline roept al `pytest` aan maar er zijn geen tests. Dat maakt het moeilijk om te weten of wijzigingen iets breken.
+**Doel**  
+Regressies sneller vinden en vertrouwen vergroten bij wijzigingen.
 
-**Wat moet er gebeuren:**
-
-Maak `backend/test_main.py` aan met minimale tests:
-- Test of `/api/health` een 200-respons geeft
-- Test of `/api/scan` met een onbekende tag een 404 geeft
-- Test of `/api/scan` met een bekende tag een geldig rooster geeft (na het oplossen van stap 1 en 2)
-
----
-
-## Stap 8 — Testen op echte hardware
-
-**Wanneer:** Nadat stap 1 t/m 4 zijn afgerond.
-
-**Checklist voor praktijktesten:**
-- [ ] Backend start op zonder fouten vanuit de juiste map
-- [ ] Database wordt correct aangemaakt
-- [ ] Scan met een testtag geeft het juiste rooster terug
-- [ ] Frontend toont het rooster op het scherm
-- [ ] Timeout werkt: standby-scherm na 45 seconden
-- [ ] Onbekende tag geeft een duidelijke foutmelding
-- [ ] Scherm is goed leesbaar op afstand (lettergrootte, contrast)
-- [ ] Systeem start automatisch op bij aanzetten van de Pi (autostart instellen)
+**Vervolg**
+1. Voeg backend-tests toe voor `/api/health` en `/api/scan`
+2. Test bekende en onbekende tagscenario’s
+3. Draai tests in CI zonder stilzwijgend overslaan
 
 ---
 
-## Prioriteitstabel
+## Stap 8 — Testen op echte hardware ⏳ Open
 
-| # | Stap | Prioriteit | Geschatte moeite |
-|---|---|---|---|
-| 1 | Database repareren | 🔴 Kritiek | Klein (< 1 uur) |
-| 2 | Fake data aanpassen | 🔴 Kritiek | Klein (< 1 uur) |
-| 3 | Frontend koppelen | 🟠 Hoog | Middel (2–4 uur) |
-| 4 | Hardware-integratie | 🟠 Hoog | Middel (2–4 uur) |
-| 5 | Admin-sleutel naar .env | 🟡 Normaal | Klein (< 30 min) |
-| 6 | Somtoday/Zermelo-koppeling | 🟢 Uitbreiding | Groot (meerdere dagen) |
-| 7 | Tests toevoegen | 🟡 Normaal | Middel (1–2 uur) |
-| 8 | Testen op hardware | 🟠 Hoog | Afhankelijk van bovenstaande |
+**Doel**  
+Valideren dat de volledige keten werkt op Raspberry Pi + RC522 + scherm.
+
+**Vervolg**
+- [ ] Backend start stabiel op Pi
+- [ ] RC522 leest tags betrouwbaar uit
+- [ ] Scan toont juiste leerlingrooster op scherm
+- [ ] Onbekende tag geeft nette foutmelding
+- [ ] Timeout keert terug naar standby
+- [ ] Kioskstart en backend-start bij opstarten Pi werken automatisch
+
+---
+
+## Prioriteitstabel (actuele status)
+
+| # | Stap | Prioriteit | Status | Volgende actie |
+|---|---|---|---|---|
+| 1 | Database repareren | 🔴 Kritiek | ✅ Gerealiseerd | Monitoren via regressietests |
+| 2 | Fake data aanpassen | 🔴 Kritiek | ✅ Gerealiseerd | Valideren bij datamodel-wijzigingen |
+| 3 | Frontend koppelen | 🟠 Hoog | ✅ Gerealiseerd | Verfijnen UX + hardware-trigger |
+| 4 | Hardware-integratie | 🟠 Hoog | ⏳ Open | `rfid_reader.py` implementeren op Pi |
+| 5 | Admin-sleutel naar .env | 🟡 Normaal | ⏳ Open | `ADMIN_API_KEY` doorvoeren |
+| 6 | Somtoday/Zermelo-koppeling | 🟢 Uitbreiding | ⏳ Open | Bronkeuze + API-spike |
+| 7 | Tests toevoegen | 🟡 Normaal | ⏳ Open | `pytest`-tests voor kernflow maken |
+| 8 | Testen op hardware | 🟠 Hoog | ⏳ Open | Integratietest op Raspberry Pi plannen |

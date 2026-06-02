@@ -1,101 +1,59 @@
-# 🎓 RFID Roosterscherm - Pilot V5
+# 🎓 RoosterSomtoday (RFID Roosterscherm)
 
-Project van Tom, Floris, Zine-Eddine, Rekawt
+RoosterSomtoday is een schoolproject waarmee leerlingen via een RFID-tag hun dagrooster op een gedeeld scherm kunnen bekijken (telefoonvrij alternatief).
 
-Een scherm in de aula, waar leerlingen door middel van hun RFID-tag te scannen hun dagrooster kunnen zien. Dit is een telefoonvrije oplossing voor het schoolplein.
+## Wat doet dit project?
 
-## 📋 Projectdoelen
-- Leerling scant kluis-tag (RFID/NFC)
-- Scherm toont dagrooster van die leerling
-- Volledig geautomatiseerd display zonder handmatige invoer
-- Veilig en privacygericht (geen echte data in repo)
-- Eenvoudig in te stellen en uit te breiden
+1. Leerling scant RFID-tag
+2. Backend koppelt tag aan leerling
+3. Backend levert roosterdata terug
+4. Frontend toont huidige/volgende les en dagoverzicht
 
-## 🏗️ Architectuur
-Raspberry Pi met RFID lezer (RC522) en HDMI scherm -> Backend API (FastAPI) -> SQLite database en fake data -> Frontend (Kiosk browser)
+## Globale architectuur
 
-## 📂 Mappenstructuur
-- backend/main.py - FastAPI applicatie
-- backend/database_init.py - Database setup
-- frontend/index.html - Kiosk webinterface
-- data/fake_schedule.json - Nep-roosterdata
-- data/tag_mapping.json - Tag-mappings
-- requirements.txt - Python dependencies
-- .gitignore - Git exclusies
-- .env.example - Template configuratie
+- **Frontend**: `frontend/index.html` (kiosk-weergave + testscan)
+- **Backend**: `backend/main.py` (FastAPI met `/api/health`, `/api/scan`, `/api/admin/map`)
+- **Data nu**: SQLite + fake roosterdata (`data/fake_schedule.json`)
+- **Richting vervolg**: integratie met echte roosterbron (Somtoday/Zermelo) volgens roadmap
 
-## 🚀 Installatiehandleiding
+## Snel starten
 
-### Voorvereisten
-- Python 3.8+
-- Pip (Python package manager)
-- Browser (Chrome/Firefox)
-- Git
-
-### Backend opstarten
+### 1) Dependencies installeren
+```bash
 pip install -r requirements.txt
-cd backend
-python database_init.py
-python main.py
+```
 
-De server draait nu op http://localhost:8000
+### 2) Database initialiseren
+```bash
+python backend/database_init.py
+```
 
-### Frontend openen
-Optie A: Direct openen: frontend/index.html
-Optie B: Via Python server: python -m http.server 8001 en open http://localhost:8001/index.html
-Optie C: Op Raspberry Pi: chromium-browser --kiosk file:///home/pi/RoosterSomtoday/frontend/index.html
+### 3) Backend starten
+```bash
+python backend/main.py
+```
+Backend draait dan op `http://localhost:8000`.
 
-## 🧪 Testen
+### 4) Frontend openen
+Open `frontend/index.html` in je browser en voer een test tag-UID in.
 
-### Test Tags
-04A1B23C9F - wessel
-12B4C56D8E - anna
-99Z8Y7X6W5 - thomas
+Testtags:
+- `04A1B23C9F` → wessel
+- `12B4C56D8E` → anna
+- `99Z8Y7X6W5` → thomas
 
-### Test-scenario's
-1. Standby scherm laadt
-2. Scan met bekende tag - rooster verschijnt
-3. Scan met onbekende tag - foutmelding
-4. Timeout test - na 45 sec terug naar standby
-5. Health check: curl http://localhost:8000/api/health
+## Belangrijke documentatie (`docs/`)
 
-## 📊 API Endpoints
+### Lees dit als nieuw teamlid als eerste
+1. [`docs/overdracht.md`](docs/overdracht.md) — huidige status, wat werkt, wat nog niet, aanbevolen werkvolgorde
+2. [`docs/vervolgstappen.md`](docs/vervolgstappen.md) — roadmap met gerealiseerde milestones en openstaande stappen
+3. [`docs/testen.md`](docs/testen.md) — lokale testhandleiding (backend, curl, frontend-flow)
+4. [`docs/hardware-rc522.md`](docs/hardware-rc522.md) — RC522 aansluiten op Raspberry Pi 4B
 
-POST /api/scan - Scand RFID tag en geeft rooster terug
-GET /api/health - Health check endpoint
-POST /api/admin/map - Voeg mapping toe
+### Aanvullende achtergrond
+- [`docs/overzicht.md`](docs/overzicht.md)
+- [`docs/architectuur.md`](docs/architectuur.md)
+- [`docs/status.md`](docs/status.md)
 
-## 📦 Data Structuur
-Lessons hebben: start, end, subject, room, teacher, status
-Status waarden: normal, moved, cancelled
-Screen-ready JSON bevat: student_display, date, now, next, today, ui
-
-## 🔐 Beveiliging & Privacy
-- Geen echte leerlingdata in repository
-- Geen API-tokens in code
-- .env file in .gitignore
-- Logging zonder persoonsgegevens
-- Fake data voor testen
-
-## 🐛 Troubleshooting
-- ModuleNotFoundError: pip install -r requirements.txt
-- Connection refused: check of backend draait
-- CORS error: backend CORS is enabled, check console
-- Database errors: python database_init.py
-- Timeout werkt niet: check JavaScript console
-- Port 8000 in gebruik: wijzig poort in main.py
-
-## 👥 Team
-Ontwikkelaars: Tom, Floris, Zine-Eddine, Rekawt
-
-## 📚 Documentatie
-
-Uitgebreide documentatie staat in de [`docs/`](docs/) map:
-
-- [`docs/overzicht.md`](docs/overzicht.md) — Wat het project is en hoe het werkt
-- [`docs/architectuur.md`](docs/architectuur.md) — Architectuur, componenten en datastromen
-- [`docs/status.md`](docs/status.md) — Wat af is, wat ontbreekt en bekende inconsistenties
-- [`docs/vervolgstappen.md`](docs/vervolgstappen.md) — Concrete geprioriteerde vervolgstappen
-
-## 📝 Licentie
-School project - Vrij gebruik
+## Licentie
+Schoolproject — vrij te gebruiken binnen onderwijscontext.
