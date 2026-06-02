@@ -1,1 +1,212 @@
-<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Kiosk UI</title>\n    <style>\n        body {\n            font-family: Arial, sans-serif;\n            background-color: #121212;\n            color: #ffffff;\n            margin: 0;\n            padding: 20px;\n        }\n        .container {\n            display: flex;\n            flex-direction: column;\n            align-items: center;\n            justify-content: center;\n            height: 100vh;\n        }\n        h1 {\n            margin: 20px 0;\n        }\n        .schedule {\n            background-color: #1e1e1e;\n            padding: 15px;\n            border-radius: 8px;\n            width: 300px;\n            text-align: center;\n        }\n        .error {\n            color: red;\n            display: none;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <h1>Kiosk Standby Screen</h1>\n        <div class=\"schedule\">\n            <div id=\"scheduleDisplay\">Schedule will be displayed here.</div>\n            <div id=\"errorDisplay\" class=\"error\">Error loading schedule. Please try again.</div>\n        </div>\n    </div>\n    <script>\n        const scheduleDisplay = document.getElementById('scheduleDisplay');\n        const errorDisplay = document.getElementById('errorDisplay');\n        const timeoutDuration = 30000; // 30 seconds\n        let timeoutId;\n        \n        function displaySchedule() {\n            // Simulate scheduling data retrieval\n            setTimeout(() => {\n                const scheduleData = 'Next Event: Meeting at 10:00 AM';  // Replace with actual data retrieval logic\n                scheduleDisplay.textContent = scheduleData;\n                resetTimeout();\n            }, 1000); // Simulate network delay\n        }\n        \n        function handleError() {\n            errorDisplay.style.display = 'block';\n            scheduleDisplay.style.display = 'none';\n        }\n        \n        function resetTimeout() {\n            clearTimeout(timeoutId);\n            timeoutId = setTimeout(handleError, timeoutDuration);\n        }\n        \n        // Start the schedule display process\n        displaySchedule();\n        resetTimeout();\n    </script>\n</body>\n</html>\n
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiosk UI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            gap: 20px;
+        }
+        h1 {
+            margin: 0;
+        }
+        .schedule {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            width: 360px;
+        }
+        .controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .controls label {
+            width: 100%;
+            font-size: 0.9rem;
+        }
+        .controls input,
+        .controls button {
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #333;
+        }
+        .controls input {
+            flex: 1;
+        }
+        .controls button {
+            background: #2d6cdf;
+            color: #fff;
+            cursor: pointer;
+        }
+        .lesson {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #333;
+        }
+        .error {
+            color: #ff6b6b;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="title">Kiosk Standby Screen</h1>
+        <div class="schedule">
+            <div class="controls">
+                <label for="tagInput">Test tag-UID</label>
+                <input id="tagInput" type="text" placeholder="Voer test tag-UID in" aria-label="Voer test tag-UID in">
+                <button id="scanButton" type="button" aria-label="Start test scan">Test scan</button>
+            </div>
+            <div id="scheduleDisplay">Wacht op testscan…</div>
+            <div id="errorDisplay" class="error"></div>
+        </div>
+    </div>
+    <script>
+        const title = document.getElementById('title');
+        const tagInput = document.getElementById('tagInput');
+        const scanButton = document.getElementById('scanButton');
+        const scheduleDisplay = document.getElementById('scheduleDisplay');
+        const errorDisplay = document.getElementById('errorDisplay');
+        const isHttpProtocol = window.location.protocol === 'http:' || window.location.protocol === 'https:';
+        const currentProtocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+        const FALLBACK_SCAN_API_URL = `${currentProtocol}//localhost:8000/api/scan`;
+        const SCAN_API_URL = window.SCAN_API_URL
+            || (isHttpProtocol
+                ? '/api/scan'
+                : FALLBACK_SCAN_API_URL);
+        const DEFAULT_TIMEOUT_SECONDS = 45;
+        const MIN_TIMEOUT_SECONDS = 5;
+        const MAX_TIMEOUT_SECONDS = 300;
+        let standbyTimeoutId;
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function validateTimeout(timeoutValue) {
+            const timeoutNumber = Number(timeoutValue);
+            if (!Number.isFinite(timeoutNumber)) {
+                return DEFAULT_TIMEOUT_SECONDS;
+            }
+
+            return Math.min(MAX_TIMEOUT_SECONDS, Math.max(MIN_TIMEOUT_SECONDS, timeoutNumber));
+        }
+
+        function formatLesson(label, lesson) {
+            if (!lesson) {
+                return `<div class="lesson"><strong>${escapeHtml(label)}:</strong> geen</div>`;
+            }
+
+            return `<div class="lesson">
+                <strong>${escapeHtml(label)}:</strong><br>
+                ${escapeHtml(lesson.subject)} · ${escapeHtml(lesson.room)}<br>
+                ${escapeHtml(lesson.teacher)}<br>
+                ${escapeHtml(lesson.start)} - ${escapeHtml(lesson.end)}
+            </div>`;
+        }
+
+        function showStandby() {
+            clearTimeout(standbyTimeoutId);
+            title.textContent = 'Kiosk Standby Screen';
+            scheduleDisplay.innerHTML = 'Wacht op testscan…';
+            errorDisplay.style.display = 'none';
+            errorDisplay.textContent = '';
+        }
+
+        function showError(message) {
+            clearTimeout(standbyTimeoutId);
+            title.textContent = 'Kiosk Standby Screen';
+            scheduleDisplay.innerHTML = 'Wacht op testscan…';
+            errorDisplay.textContent = message;
+            errorDisplay.style.display = 'block';
+        }
+
+        function showSchedule(data) {
+            clearTimeout(standbyTimeoutId);
+            errorDisplay.style.display = 'none';
+            title.textContent = data.student_display || 'Onbekende leerling';
+
+            const nowHtml = formatLesson('Huidige les', data.now);
+            const nextHtml = formatLesson('Volgende les', data.next);
+
+            scheduleDisplay.innerHTML = `
+                <div><strong>Leerling:</strong> ${escapeHtml(data.student_display || '-')}</div>
+                <div><strong>Datum:</strong> ${escapeHtml(data.date || '-')}</div>
+                ${nowHtml}
+                ${nextHtml}
+            `;
+        }
+
+        async function scanTag(tagUid) {
+            const trimmed = tagUid.trim();
+            if (!trimmed) {
+                showError('Voer eerst een tag-UID in');
+                return;
+            }
+
+            scanButton.disabled = true;
+            scanButton.textContent = 'Scannen...';
+
+            try {
+                const response = await fetch(SCAN_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tag_uid: trimmed })
+                });
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        showError('Tag onbekend of rooster niet beschikbaar');
+                    } else {
+                        showError(`Serverfout bij ophalen rooster (status ${response.status})`);
+                    }
+                    return;
+                }
+
+                const data = await response.json();
+                showSchedule(data);
+                const timeoutSeconds = validateTimeout(data.ui?.timeout_seconds);
+                standbyTimeoutId = setTimeout(showStandby, timeoutSeconds * 1000);
+            } catch (e) {
+                console.error('Scan failed', { message: e?.message });
+                showError('Backend niet bereikbaar');
+            } finally {
+                scanButton.disabled = false;
+                scanButton.textContent = 'Test scan';
+            }
+        }
+
+        scanButton.addEventListener('click', () => scanTag(tagInput.value));
+        tagInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                scanTag(tagInput.value);
+            }
+        });
+
+        showStandby();
+    </script>
+</body>
+</html>
