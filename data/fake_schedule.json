@@ -1,21 +1,21 @@
 {
-  "schedules": [
-    {
-      "user_id": "user1",
-      "schedule": [
-        { "date": "2026-03-31", "time": "08:00:00", "activity": "Meeting with team" },
-        { "date": "2026-03-31", "time": "10:00:00", "activity": "Work on project A" },
-        { "date": "2026-03-31", "time": "12:00:00", "activity": "Lunch Break" },
-        { "date": "2026-03-31", "time": "13:00:00", "activity": "Client Call" }
-      ]
-    },
-    {
-      "user_id": "user2",
-      "schedule": [
-        { "date": "2026-03-31", "time": "09:00:00", "activity": "Team Standup" },
-        { "date": "2026-03-31", "time": "11:00:00", "activity": "Work on project B" },
-        { "date": "2026-03-31", "time": "14:00:00", "activity": "Review Code" }
-      ]
-    }
-  ]
+  "wessel": {
+    "lessons": [
+      { "start": "08:30", "end": "10:00", "subject": "Nederlands", "room": "A101", "teacher": "Dhr. Jansen", "status": "normal" },
+      { "start": "10:15", "end": "11:45", "subject": "Wiskunde", "room": "B203", "teacher": "Mw. De Vries", "status": "normal" },
+      { "start": "12:30", "end": "14:00", "subject": "Engels", "room": "C105", "teacher": "Dhr. Smith", "status": "normal" }
+    ]
+  },
+  "anna": {
+    "lessons": [
+      { "start": "09:00", "end": "10:30", "subject": "Biologie", "room": "D301", "teacher": "Mw. Bakker", "status": "normal" },
+      { "start": "11:00", "end": "12:30", "subject": "Geschiedenis", "room": "A203", "teacher": "Dhr. Hendriks", "status": "normal" }
+    ]
+  },
+  "thomas": {
+    "lessons": [
+      { "start": "08:30", "end": "10:00", "subject": "Scheikunde", "room": "E102", "teacher": "Dhr. Peters", "status": "normal" },
+      { "start": "13:00", "end": "14:30", "subject": "Sport", "room": "Gymzaal", "teacher": "Mw. Van Dam", "status": "normal" }
+    ]
+  }
 }
