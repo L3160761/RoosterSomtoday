@@ -1,21 +1,48 @@
+import os
 import sqlite3
 
-# Connect to SQLite database (or create it if it doesn't exist)
-database_name = 'example.db'
-connection = sqlite3.connect(database_name)
+os.makedirs("data", exist_ok=True)
 
-# Create a cursor object using the cursor() method
-cursor = connection.cursor()
+conn = sqlite3.connect("data/rooster.db")
+cursor = conn.cursor()
 
-# Create a table example
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY,
-    username TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE
+cursor.execute(
+    """
+    CREATE TABLE IF NOT EXISTS tags (
+        tag_uid TEXT PRIMARY KEY,
+        user_key TEXT NOT NULL,
+        active INTEGER DEFAULT 1
+    )
+    """
 )
-''')
 
-# Commit the changes and close the connection
-connection.commit()
-connection.close()
+cursor.execute(
+    """
+    CREATE TABLE IF NOT EXISTS students (
+        user_key TEXT PRIMARY KEY,
+        display_name TEXT NOT NULL
+    )
+    """
+)
+
+cursor.executemany(
+    "INSERT OR IGNORE INTO tags (tag_uid, user_key, active) VALUES (?, ?, 1)",
+    [
+        ("04A1B23C9F", "wessel"),
+        ("12B4C56D8E", "anna"),
+        ("99Z8Y7X6W5", "thomas"),
+    ],
+)
+
+cursor.executemany(
+    "INSERT OR IGNORE INTO students (user_key, display_name) VALUES (?, ?)",
+    [
+        ("wessel", "Wessel"),
+        ("anna", "Anna"),
+        ("thomas", "Thomas"),
+    ],
+)
+
+conn.commit()
+conn.close()
+print("Database aangemaakt: data/rooster.db")
