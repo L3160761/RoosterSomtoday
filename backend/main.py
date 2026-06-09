@@ -4,6 +4,8 @@ import sqlite3
 import json
 from datetime import datetime, timedelta
 import logging
+import asyncio
+from rfid_reader import get_reader
 
 app = FastAPI(title="RFID Roosterscherm API", version="0.1.0")
 
@@ -54,6 +56,46 @@ def get_current_and_next_lesson(lessons, current_time_str):
     
     return current, next_lesson
 
+def get_schedule_response(user_key):
+    """Bouw een schedule-response voor een user_key"""
+    # Laad roosterdata
+    schedule_data = load_fake_schedule()
+    lessons = schedule_data.get(user_key, {}).get('lessons', [])
+    
+    if not lessons:
+        logger.warning(f"Geen rooster gevonden voor user_key: {user_key}")
+        return None
+    
+    # Bepaal huidige en volgende les
+    now = datetime.now()
+    current_time_str = now.strftime("%H:%M")
+    today_date = now.strftime("%Y-%m-%d")
+    
+    current_lesson, next_lesson = get_current_and_next_lesson(lessons, current_time_str)
+    
+    # Haal student display naam
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT display_name FROM students WHERE user_key = ?", (user_key,))
+    student_result = cursor.fetchone()
+    conn.close()
+    
+    display_name = student_result['display_name'] if student_result else user_key
+    
+    # Bouw response (screen-ready JSON)
+    response = {
+        "student_display": display_name,
+        "date": today_date,
+        "now": current_lesson if current_lesson else None,
+        "next": next_lesson if next_lesson else None,
+        "today": lessons,
+        "ui": {
+            "timeout_seconds": 45
+        }
+    }
+    
+    return response
+
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint"""
@@ -89,44 +131,74 @@ async def scan_tag(tag_data: dict):
         raise HTTPException(status_code=404, detail="Tag onbekend")
     
     user_key = result['user_key']
+    response = get_schedule_response(user_key)
     
-    # Laad roosterdata
-    schedule_data = load_fake_schedule()
-    lessons = schedule_data.get(user_key, {}).get('lessons', [])
-    
-    if not lessons:
-        logger.warning(f"Geen rooster gevonden voor user_key: {user_key}")
+    if not response:
         raise HTTPException(status_code=404, detail="Rooster niet beschikbaar")
     
-    # Bepaal huidige en volgende les
-    now = datetime.now()
-    current_time_str = now.strftime("%H:%M")
-    today_date = now.strftime("%Y-%m-%d")
+    logger.info(f"Scan succesvol verwerkt voor: {user_key}")
+    return response
+
+@app.get("/api/scan-hardware")
+async def scan_hardware(timeout: int = 10):
+    """
+    Hardware-scan endpoint: lees RC522 RFID-tag van Raspberry Pi
     
-    current_lesson, next_lesson = get_current_and_next_lesson(lessons, current_time_str)
+    Query params:
+    - timeout: Maximale wachttijd in seconden (default: 10)
     
-    # Haal student display naam
+    Response: Zoals /api/scan (screen-ready JSON) of foutmelding
+    """
+    if timeout < 1 or timeout > 60:
+        raise HTTPException(status_code=400, detail="Timeout moet tussen 1 en 60 seconden zijn")
+    
+    reader = get_reader()
+    
+    # Controleer of hardware beschikbaar is
+    if not reader.hardware_available:
+        logger.warning("RC522 hardware niet beschikbaar")
+        raise HTTPException(
+            status_code=503,
+            detail="RC522 hardware niet beschikbaar (niet op Raspberry Pi of SPI niet ingeschakeld?)"
+        )
+    
+    logger.info(f"Hardware-scan gestart (timeout: {timeout}s)")
+    
+    # Lees tag (async-safe met timeout)
+    try:
+        tag_uid = await asyncio.wait_for(
+            asyncio.to_thread(reader.read_tag, timeout),
+            timeout=timeout + 1
+        )
+    except asyncio.TimeoutError:
+        logger.warning("Hardware-scan timeout bereikt")
+        raise HTTPException(status_code=408, detail="Geen tag gescand (timeout)")
+    except Exception as e:
+        logger.error(f"Fout bij hardware-scan: {e}")
+        raise HTTPException(status_code=500, detail=f"Fout bij hardware-scan: {str(e)}")
+    
+    if not tag_uid:
+        logger.warning("Geen tag gescand")
+        raise HTTPException(status_code=408, detail="Geen tag gescand")
+    
+    # Zoek tag in database
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT display_name FROM students WHERE user_key = ?", (user_key,))
-    student_result = cursor.fetchone()
+    cursor.execute("SELECT user_key FROM tags WHERE tag_uid = ? AND active = 1", (tag_uid,))
+    result = cursor.fetchone()
     conn.close()
     
-    display_name = student_result['display_name'] if student_result else user_key
+    if not result:
+        logger.info(f"Onbekende tag gescand: {tag_uid[:4]}...{tag_uid[-4:]}")
+        raise HTTPException(status_code=404, detail=f"Tag onbekend: {tag_uid}")
     
-    # Bouw response (screen-ready JSON)
-    response = {
-        "student_display": display_name,
-        "date": today_date,
-        "now": current_lesson if current_lesson else None,
-        "next": next_lesson if next_lesson else None,
-        "today": lessons,
-        "ui": {
-            "timeout_seconds": 45
-        }
-    }
+    user_key = result['user_key']
+    response = get_schedule_response(user_key)
     
-    logger.info(f"Scan succesvol verwerkt voor: {user_key}")
+    if not response:
+        raise HTTPException(status_code=404, detail="Rooster niet beschikbaar")
+    
+    logger.info(f"Hardware-scan succesvol verwerkt voor: {user_key}")
     return response
 
 @app.post("/api/admin/map")
