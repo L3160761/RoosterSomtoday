@@ -1,101 +1,378 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kiosk UI</title>
+    <title>RoosterSomtoday - Kiosk</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #121212;
-            color: #ffffff;
+        * {
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            box-sizing: border-box;
         }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 40px 20px;
+        }
+
+        /* ===== STANDBY SCREEN ===== */
+        .standby-screen {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            gap: 20px;
+            text-align: center;
+            gap: 40px;
         }
-        h1 {
-            margin: 0;
-        }
-        .schedule {
-            background-color: #1e1e1e;
-            padding: 15px;
-            border-radius: 8px;
-            width: 360px;
-        }
-        .controls {
+
+        .nfc-card {
+            width: 120px;
+            height: 180px;
+            background: linear-gradient(135deg, #e8e8e8 0%, #f5f5f5 100%);
+            border-radius: 12px;
             display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
             align-items: center;
-            flex-wrap: wrap;
+            justify-content: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+            animation: float 3s ease-in-out infinite;
         }
-        .controls label {
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .nfc-card::before {
+            content: '';
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 30px;
+            background: repeating-linear-gradient(
+                90deg,
+                #333 0px,
+                #333 2px,
+                transparent 2px,
+                transparent 6px
+            );
+            border-radius: 4px;
+        }
+
+        .nfc-card::after {
+            content: '';
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 70px;
+            border: 3px solid #999;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(200, 200, 200, 0.5), transparent);
+        }
+
+        .clock {
+            font-size: 120px;
+            font-weight: 700;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -5px;
+        }
+
+        .date {
+            font-size: 36px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            color: #b0b0b0;
+        }
+
+        .scan-prompt {
+            font-size: 48px;
+            font-weight: 500;
+            margin-top: 60px;
+            letter-spacing: 1px;
+        }
+
+        .arrow-down {
+            font-size: 80px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(20px);
+            }
+        }
+
+        /* ===== SCHEDULE SCREEN ===== */
+        .schedule-screen {
+            display: none;
+            gap: 30px;
+        }
+
+        .schedule-screen.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .student-name {
+            font-size: 64px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
             width: 100%;
-            font-size: 0.9rem;
+            max-width: 900px;
         }
-        .controls input,
-        .controls button {
+
+        .lesson-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .lesson-label {
+            font-size: 18px;
+            color: #b0b0b0;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .lesson-subject {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .lesson-details {
+            font-size: 24px;
+            line-height: 1.6;
+            color: #d0d0d0;
+        }
+
+        .lesson-time {
+            font-size: 20px;
+            color: #90ee90;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+
+        .lesson-empty {
+            color: #707070;
+            font-size: 24px;
+        }
+
+        .error-message {
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid #ff6b6b;
+            color: #ff6b6b;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 18px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* ===== CONTROLS (TEST SCAN) ===== */
+        .test-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 300px;
+            display: none;
+        }
+
+        .test-controls.show {
+            display: block;
+        }
+
+        .test-controls label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 8px;
+            color: #b0b0b0;
+        }
+
+        .test-controls input {
+            width: 100%;
             padding: 8px;
             border-radius: 6px;
             border: 1px solid #333;
+            background: #1e1e1e;
+            color: #fff;
+            margin-bottom: 8px;
         }
-        .controls input {
-            flex: 1;
-        }
-        .controls button {
+
+        .test-controls button {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
             background: #2d6cdf;
             color: #fff;
+            border: none;
             cursor: pointer;
+            font-size: 12px;
         }
-        .lesson {
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid #333;
+
+        .test-controls button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
-        .error {
-            color: #ff6b6b;
-            margin-top: 10px;
-            display: none;
+
+        @media (max-width: 768px) {
+            .clock {
+                font-size: 80px;
+            }
+            .date {
+                font-size: 24px;
+            }
+            .scan-prompt {
+                font-size: 32px;
+            }
+            .arrow-down {
+                font-size: 50px;
+            }
+            .schedule-grid {
+                grid-template-columns: 1fr;
+            }
+            .student-name {
+                font-size: 48px;
+            }
+            .lesson-subject {
+                font-size: 36px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1 id="title">Kiosk Standby Screen</h1>
-        <div class="schedule">
-            <div class="controls">
-                <label for="tagInput">Test tag-UID</label>
-                <input id="tagInput" type="text" placeholder="Voer test tag-UID in" aria-label="Voer test tag-UID in">
-                <button id="scanButton" type="button" aria-label="Start test scan">Test scan</button>
-            </div>
-            <div id="scheduleDisplay">Wacht op testscan…</div>
-            <div id="errorDisplay" class="error"></div>
+    <!-- STANDBY SCREEN -->
+    <div class="standby-screen" id="standbyScreen">
+        <div class="nfc-card"></div>
+        <div>
+            <div class="clock" id="clock">12:00</div>
+            <div class="date" id="date">Maandag 1 januari</div>
+        </div>
+        <div>
+            <div class="scan-prompt">Scan Leerlingpas</div>
+            <div class="arrow-down">⬇</div>
         </div>
     </div>
+
+    <!-- SCHEDULE SCREEN -->
+    <div class="container">
+        <div class="schedule-screen" id="scheduleScreen">
+            <div class="student-name" id="studentName">Leerling</div>
+            <div class="error-message" id="errorMessage"></div>
+            <div class="schedule-grid" id="scheduleGrid">
+                <div class="lesson-card">
+                    <div class="lesson-label">Huidige les</div>
+                    <div id="currentLesson">Geen</div>
+                </div>
+                <div class="lesson-card">
+                    <div class="lesson-label">Volgende les</div>
+                    <div id="nextLesson">Geen</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TEST CONTROLS (Hidden by default) -->
+    <div class="test-controls" id="testControls">
+        <label for="tagInput">Test tag-UID:</label>
+        <input id="tagInput" type="text" placeholder="bijv. 04A1B23C9F">
+        <button id="scanButton">Test scan</button>
+    </div>
+
     <script>
-        const title = document.getElementById('title');
+        const standbyScreen = document.getElementById('standbyScreen');
+        const scheduleScreen = document.getElementById('scheduleScreen');
+        const testControls = document.getElementById('testControls');
+        const clockEl = document.getElementById('clock');
+        const dateEl = document.getElementById('date');
+        const studentNameEl = document.getElementById('studentName');
+        const currentLessonEl = document.getElementById('currentLesson');
+        const nextLessonEl = document.getElementById('nextLesson');
+        const errorMessageEl = document.getElementById('errorMessage');
         const tagInput = document.getElementById('tagInput');
         const scanButton = document.getElementById('scanButton');
-        const scheduleDisplay = document.getElementById('scheduleDisplay');
-        const errorDisplay = document.getElementById('errorDisplay');
+
         const isHttpProtocol = window.location.protocol === 'http:' || window.location.protocol === 'https:';
         const currentProtocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
         const FALLBACK_SCAN_API_URL = `${currentProtocol}//localhost:8000/api/scan`;
-        const SCAN_API_URL = window.SCAN_API_URL
-            || (isHttpProtocol
-                ? '/api/scan'
-                : FALLBACK_SCAN_API_URL);
+        const SCAN_API_URL = window.SCAN_API_URL || (isHttpProtocol ? '/api/scan' : FALLBACK_SCAN_API_URL);
+        
         const DEFAULT_TIMEOUT_SECONDS = 45;
         const MIN_TIMEOUT_SECONDS = 5;
         const MAX_TIMEOUT_SECONDS = 300;
+
         let standbyTimeoutId;
+        let isDevelopment = !window.location.hostname || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+        // Show test controls in development
+        if (isDevelopment) {
+            testControls.classList.add('show');
+        }
+
+        // Update clock every second
+        function updateClock() {
+            const now = new Date();
+            clockEl.textContent = now.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', hour12: false });
+            dateEl.textContent = now.toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        // Format lesson data
+        function formatLessonHtml(lesson) {
+            if (!lesson) {
+                return '<div class="lesson-empty">Geen les</div>';
+            }
+            return `
+                <div class="lesson-subject">${escapeHtml(lesson.subject)}</div>
+                <div class="lesson-details">
+                    Lokaal: ${escapeHtml(lesson.room)}<br>
+                    Docent: ${escapeHtml(lesson.teacher)}
+                </div>
+                <div class="lesson-time">${escapeHtml(lesson.start)} - ${escapeHtml(lesson.end)}</div>
+            `;
+        }
 
         function escapeHtml(value) {
             return String(value ?? '')
@@ -111,53 +388,36 @@
             if (!Number.isFinite(timeoutNumber)) {
                 return DEFAULT_TIMEOUT_SECONDS;
             }
-
             return Math.min(MAX_TIMEOUT_SECONDS, Math.max(MIN_TIMEOUT_SECONDS, timeoutNumber));
-        }
-
-        function formatLesson(label, lesson) {
-            if (!lesson) {
-                return `<div class="lesson"><strong>${escapeHtml(label)}:</strong> geen</div>`;
-            }
-
-            return `<div class="lesson">
-                <strong>${escapeHtml(label)}:</strong><br>
-                ${escapeHtml(lesson.subject)} · ${escapeHtml(lesson.room)}<br>
-                ${escapeHtml(lesson.teacher)}<br>
-                ${escapeHtml(lesson.start)} - ${escapeHtml(lesson.end)}
-            </div>`;
         }
 
         function showStandby() {
             clearTimeout(standbyTimeoutId);
-            title.textContent = 'Kiosk Standby Screen';
-            scheduleDisplay.innerHTML = 'Wacht op testscan…';
-            errorDisplay.style.display = 'none';
-            errorDisplay.textContent = '';
+            scheduleScreen.classList.remove('active');
+            standbyScreen.style.display = 'flex';
+            errorMessageEl.classList.remove('show');
         }
 
         function showError(message) {
             clearTimeout(standbyTimeoutId);
-            title.textContent = 'Kiosk Standby Screen';
-            scheduleDisplay.innerHTML = 'Wacht op testscan…';
-            errorDisplay.textContent = message;
-            errorDisplay.style.display = 'block';
+            errorMessageEl.textContent = message;
+            errorMessageEl.classList.add('show');
+            scheduleScreen.classList.add('active');
+            standbyScreen.style.display = 'none';
         }
 
         function showSchedule(data) {
             clearTimeout(standbyTimeoutId);
-            errorDisplay.style.display = 'none';
-            title.textContent = data.student_display || 'Onbekende leerling';
+            standbyScreen.style.display = 'none';
+            scheduleScreen.classList.add('active');
+            errorMessageEl.classList.remove('show');
 
-            const nowHtml = formatLesson('Huidige les', data.now);
-            const nextHtml = formatLesson('Volgende les', data.next);
+            studentNameEl.textContent = escapeHtml(data.student_display || 'Leerling');
+            currentLessonEl.innerHTML = formatLessonHtml(data.now);
+            nextLessonEl.innerHTML = formatLessonHtml(data.next);
 
-            scheduleDisplay.innerHTML = `
-                <div><strong>Leerling:</strong> ${escapeHtml(data.student_display || '-')}</div>
-                <div><strong>Datum:</strong> ${escapeHtml(data.date || '-')}</div>
-                ${nowHtml}
-                ${nextHtml}
-            `;
+            const timeoutSeconds = validateTimeout(data.ui?.timeout_seconds);
+            standbyTimeoutId = setTimeout(showStandby, timeoutSeconds * 1000);
         }
 
         async function scanTag(tagUid) {
@@ -181,15 +441,13 @@
                     if (response.status === 404) {
                         showError('Tag onbekend of rooster niet beschikbaar');
                     } else {
-                        showError(`Serverfout bij ophalen rooster (status ${response.status})`);
+                        showError(`Fout bij ophalen rooster (status ${response.status})`);
                     }
                     return;
                 }
 
                 const data = await response.json();
                 showSchedule(data);
-                const timeoutSeconds = validateTimeout(data.ui?.timeout_seconds);
-                standbyTimeoutId = setTimeout(showStandby, timeoutSeconds * 1000);
             } catch (e) {
                 console.error('Scan failed', { message: e?.message });
                 showError('Backend niet bereikbaar');
@@ -206,6 +464,9 @@
             }
         });
 
+        // Initialize
+        updateClock();
+        setInterval(updateClock, 1000);
         showStandby();
     </script>
 </body>
