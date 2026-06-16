@@ -1,21 +1,26 @@
 {
-  "wessel": {
+  "tom": {
     "lessons": [
-      { "start": "08:30", "end": "10:00", "subject": "Nederlands", "room": "A101", "teacher": "Dhr. Jansen", "status": "normal" },
-      { "start": "10:15", "end": "11:45", "subject": "Wiskunde", "room": "B203", "teacher": "Mw. De Vries", "status": "normal" },
-      { "start": "12:30", "end": "14:00", "subject": "Engels", "room": "C105", "teacher": "Dhr. Smith", "status": "normal" }
+      { "start": "08:30", "end": "09:45", "subject": "academische vaardigheden", "room": "127", "teacher": "Mw. Leemreize", "status": "normal" },
+      { "start": "10:00", "end": "11:15", "subject": "Wiskunde", "room": "403", "teacher": "Dhr. Saïdi", "status": "normal" },
+      { "start": "11:30", "end": "12:45", "subject": "O&O", "room": "506", "teacher": "Dhr. Van de Ende", "status": "normal" },
+      { "start": "13:15", "end": "14:30", "subject": "Natuurkunde", "room": "505", "teacher": "Dhr. Hamelinck", "status": "normal" },
+      { "start": "14:45", "end": "16:00", "subject": "Bedrijfseconomie", "room": "202", "teacher": "Dhr. Vroom", "status": "normal" }
     ]
   },
-  "anna": {
+  "zine": {
     "lessons": [
-      { "start": "09:00", "end": "10:30", "subject": "Biologie", "room": "D301", "teacher": "Mw. Bakker", "status": "normal" },
-      { "start": "11:00", "end": "12:30", "subject": "Geschiedenis", "room": "A203", "teacher": "Dhr. Hendriks", "status": "normal" }
+      { "start": "08:30", "end": "09:45", "subject": "academische vaardigheden", "room": "127", "teacher": "Mw. Leemreize", "status": "normal" },
+      { "start": "11:30", "end": "12:45", "subject": "O&O", "room": "506", "teacher": "Dhr. Van de Ende", "status": "normal" },
+      { "start": "13:15", "end": "14:30", "subject": "Natuurkunde", "room": "505", "teacher": "Dhr. Hamelinck", "status": "normal" }
     ]
   },
-  "thomas": {
+  "rekawt": {
     "lessons": [
-      { "start": "08:30", "end": "10:00", "subject": "Scheikunde", "room": "E102", "teacher": "Dhr. Peters", "status": "normal" },
-      { "start": "13:00", "end": "14:30", "subject": "Sport", "room": "Gymzaal", "teacher": "Mw. Van Dam", "status": "normal" }
+     { "start": "08:30", "end": "09:45", "subject": "academische vaardigheden", "room": "127", "teacher": "Mw. Leemreize", "status": "normal" },
+      { "start": "11:30", "end": "12:45", "subject": "O&O", "room": "506", "teacher": "Dhr. Van de Ende", "status": "normal" },
+      { "start": "13:15", "end": "14:30", "subject": "Natuurkunde", "room": "505", "teacher": "Dhr. Hamelinck", "status": "normal" },
+      { "start": "14:45", "end": "16:00", "subject": "Bedrijfseconomie", "room": "202", "teacher": "Dhr. Vroom", "status": "normal" }
     ]
   }
 }
