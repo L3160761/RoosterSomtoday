@@ -28,8 +28,8 @@ cursor.execute(
 cursor.executemany(
     "INSERT OR IGNORE INTO tags (tag_uid, user_key, active) VALUES (?, ?, 1)",
     [
-        ("04A1B23C9F", "tom"),
-        ("12B4C56D8E", "zine"),
+        ("04A1B23C9F", "zine"),
+        ("12B4C56D8E", "tom"),
         ("99Z8Y7X6W5", "rekawt"),
     ],
 )
@@ -37,8 +37,8 @@ cursor.executemany(
 cursor.executemany(
     "INSERT OR IGNORE INTO students (user_key, display_name) VALUES (?, ?)",
     [
+        ("zine", "Zine-Eddine"),
         ("tom", "Tom"),
-        ("zine", "Zine"),
         ("rekawt", "Rekawt"),
     ],
 )
