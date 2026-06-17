@@ -132,6 +132,7 @@
             display: none;
             min-height: 100vh;
             padding: 40px 20px;
+            position: relative;
         }
 
         .schedule-screen.active {
@@ -337,6 +338,33 @@
             gap: 6px;
         }
 
+        /* ===== TIMER OVERLAY ===== */
+        .timer-overlay {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 120px;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: 700;
+            color: #64b5f6;
+            border: 3px solid #64b5f6;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .timer-overlay.show {
+            opacity: 1;
+        }
+
+        /* ===== ERROR MESSAGE ===== */
         .error-message {
             background: rgba(255, 107, 107, 0.2);
             border: 1px solid #ff6b6b;
@@ -460,6 +488,9 @@
     <!-- SCHEDULE SCREEN -->
     <div class="container">
         <div class="schedule-screen" id="scheduleScreen">
+            <!-- TIMER OVERLAY -->
+            <div class="timer-overlay" id="timerOverlay"></div>
+
             <!-- LEFT PANEL -->
             <div class="left-panel">
                 <!-- Welcome Section -->
@@ -525,17 +556,19 @@
         const errorMessageEl = document.getElementById('errorMessage');
         const tagInput = document.getElementById('tagInput');
         const scanButton = document.getElementById('scanButton');
+        const timerOverlay = document.getElementById('timerOverlay');
 
         const isHttpProtocol = window.location.protocol === 'http:' || window.location.protocol === 'https:';
         const currentProtocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
         const FALLBACK_SCAN_API_URL = `${currentProtocol}//localhost:8000/api/scan`;
         const SCAN_API_URL = window.SCAN_API_URL || (isHttpProtocol ? '/api/scan' : FALLBACK_SCAN_API_URL);
         
-        const DEFAULT_TIMEOUT_SECONDS = 45;
+        const DEFAULT_TIMEOUT_SECONDS = 15;
         const MIN_TIMEOUT_SECONDS = 5;
         const MAX_TIMEOUT_SECONDS = 300;
 
         let standbyTimeoutId;
+        let timerIntervalId;
         let isDevelopment = !window.location.hostname || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
         // Show test controls in development
@@ -618,17 +651,43 @@
 
         function showStandby() {
             clearTimeout(standbyTimeoutId);
+            clearInterval(timerIntervalId);
             scheduleScreen.classList.remove('active');
             standbyScreen.style.display = 'flex';
             errorMessageEl.classList.remove('show');
+            timerOverlay.classList.remove('show');
         }
 
         function showError(message) {
             clearTimeout(standbyTimeoutId);
+            clearInterval(timerIntervalId);
             errorMessageEl.textContent = message;
             errorMessageEl.classList.add('show');
             scheduleScreen.classList.add('active');
             standbyScreen.style.display = 'none';
+            timerOverlay.classList.remove('show');
+            
+            // Return to standby after error timeout
+            standbyTimeoutId = setTimeout(showStandby, 5000);
+        }
+
+        function startTimer(totalSeconds) {
+            clearInterval(timerIntervalId);
+            let secondsRemaining = totalSeconds;
+            
+            timerOverlay.classList.add('show');
+            timerOverlay.textContent = secondsRemaining;
+            
+            timerIntervalId = setInterval(() => {
+                secondsRemaining--;
+                timerOverlay.textContent = secondsRemaining;
+                
+                if (secondsRemaining <= 0) {
+                    clearInterval(timerIntervalId);
+                    timerOverlay.classList.remove('show');
+                    showStandby();
+                }
+            }, 1000);
         }
 
         function showSchedule(data) {
@@ -643,7 +702,7 @@
             daginfoEl.textContent = calculateDayInfo(data.today);
 
             const timeoutSeconds = validateTimeout(data.ui?.timeout_seconds);
-            standbyTimeoutId = setTimeout(showStandby, timeoutSeconds * 1000);
+            startTimer(timeoutSeconds);
         }
 
         async function scanTag(tagUid) {
@@ -665,9 +724,9 @@
 
                 if (!response.ok) {
                     if (response.status === 404) {
-                        showError('Tag onbekend of rooster niet beschikbaar');
+                        showError('❌ Tag onbekend of rooster niet beschikbaar');
                     } else {
-                        showError(`Fout bij ophalen rooster (status ${response.status})`);
+                        showError(`❌ Fout bij ophalen rooster (status ${response.status})`);
                     }
                     return;
                 }
@@ -676,7 +735,7 @@
                 showSchedule(data);
             } catch (e) {
                 console.error('Scan failed', { message: e?.message });
-                showError('Backend niet bereikbaar');
+                showError('❌ Backend niet bereikbaar');
             } finally {
                 scanButton.disabled = false;
                 scanButton.textContent = 'Test scan';
