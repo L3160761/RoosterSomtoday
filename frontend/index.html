@@ -538,12 +538,12 @@
         let standbyTimeoutId;
         let isDevelopment = !window.location.hostname || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-        // Toon test controls in development
+        // Show test controls in development
         if (isDevelopment) {
             testControls.classList.add('show');
         }
 
-        // Werk klok elke seconde bij
+        // Update clock every second
         function updateClock() {
             const now = new Date();
             clockEl.textContent = now.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -637,7 +637,6 @@
             scheduleScreen.classList.add('active');
             errorMessageEl.classList.remove('show');
 
-            // Zet de studentnaam met fallback naar "Gebruiker"
             studentNameEl.textContent = escapeHtml(data.student_display || 'Gebruiker');
             nextLessonCardEl.innerHTML = formatNextLessonCard(data.next);
             renderLessonsList(data.today);
@@ -676,7 +675,7 @@
                 const data = await response.json();
                 showSchedule(data);
             } catch (e) {
-                console.error('Scan mislukt', { message: e?.message });
+                console.error('Scan failed', { message: e?.message });
                 showError('Backend niet bereikbaar');
             } finally {
                 scanButton.disabled = false;
@@ -691,7 +690,7 @@
             }
         });
 
-        // Initialiseer
+        // Initialize
         updateClock();
         setInterval(updateClock, 1000);
         showStandby();
