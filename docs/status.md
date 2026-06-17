@@ -165,7 +165,7 @@ De repository heet `RoosterSomtoday` en `.env.example` bevat variabelen `ZERMELO
 |---|---|---|---|
 | 1 | `database_init.py` maakt `example.db` + `users`-tabel, maar backend verwacht `data/rooster.db` + `tags` + `students` | `backend/database_init.py` vs `backend/main.py` | ❌ Backend crasht bij eerste scan |
 | 2 | `fake_schedule.json` heeft verkeerde structuur (schedules-lijst vs user_key-dict) | `data/fake_schedule.json` vs `backend/main.py` | ❌ Scan geeft altijd "Rooster niet beschikbaar" |
-| 3 | `tag_mapping.json` wordt niet gebruikt door de backend (backend gebruikt database) | `data/tag_mapping.json` | ⚠️ Verwarrend, maar geen directe fout |
+| 3 | `tag_mapping.json` bevat voorbeeld-UIDs die vervangen moeten worden door de echte NFC UID-nummers | `data/tag_mapping.json` | ⚠️ Nodig voordat echte kaarten werken |
 | 4 | `main.py` start met relatieve paden (`data/rooster.db`) maar CI start het vanuit `backend/`-map | `.github/workflows/main.yml` | ⚠️ Database gevonden mits gestart vanuit root |
 | 5 | Admin key hardcoded in broncode | `backend/main.py` regel 139 | ⚠️ Niet veilig voor productie |
 | 6 | Frontend roept backend niet aan | `frontend/index.html` | ❌ Systeem werkt niet end-to-end |

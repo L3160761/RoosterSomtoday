@@ -37,10 +37,10 @@ Backend draait dan op `http://localhost:8000`.
 ### 4) Frontend openen
 Open `frontend/index.html` in je browser en voer een test tag-UID in.
 
-Testtags:
-- `04A1B23C9F` → wessel
-- `12B4C56D8E` → anna
-- `99Z8Y7X6W5` → thomas
+Testtags (vervang deze voorbeeld-UIDs in `data/tag_mapping.json` door de echte NFC UID-nummers):
+- `04A1B23C9F` → zine
+- `12B4C56D8E` → tom
+- `99Z8Y7X6W5` → rekawt
 
 ## Belangrijke documentatie (`docs/`)
 

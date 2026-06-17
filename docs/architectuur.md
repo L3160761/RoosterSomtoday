@@ -134,17 +134,17 @@ Mogelijke waarden voor `status`: `normal`, `moved`, `cancelled`
 
 #### `data/tag_mapping.json`
 
-Bevat een eenvoudige mapping van leerlingnaam naar tag-UID:
+Bevat een eenvoudige mapping van NFC/RFID tag-UID naar leerling-key:
 
 ```json
 {
-  "wessel": "04A1B23C9F",
-  "anna": "12B4C56D8E",
-  "thomas": "99Z8Y7X6W5"
+  "04A1B23C9F": "zine",
+  "12B4C56D8E": "tom",
+  "99Z8Y7X6W5": "rekawt"
 }
 ```
 
-Dit bestand wordt **niet** door de backend gebruikt. De backend gebruikt uitsluitend de database. Dit bestand kan als referentie dienen bij het vullen van de database.
+Dit bestand wordt gebruikt door `backend/database_init.py` om de `tags`-tabel te vullen. Vervang de voorbeeld-UIDs door de echte UID-nummers die de NFC-lezer teruggeeft.
 
 ---
 

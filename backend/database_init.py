@@ -1,5 +1,8 @@
+import json
 import os
 import sqlite3
+
+TAG_MAPPING_PATH = "data/tag_mapping.json"
 
 os.makedirs("data", exist_ok=True)
 
@@ -25,13 +28,12 @@ cursor.execute(
     """
 )
 
+with open(TAG_MAPPING_PATH, "r", encoding="utf-8") as mapping_file:
+    tag_mapping = json.load(mapping_file)
+
 cursor.executemany(
     "INSERT OR IGNORE INTO tags (tag_uid, user_key, active) VALUES (?, ?, 1)",
-    [
-        ("04A1B23C9F", "zine"),
-        ("12B4C56D8E", "tom"),
-        ("99Z8Y7X6W5", "rekawt"),
-    ],
+    [(tag_uid, user_key) for tag_uid, user_key in tag_mapping.items()],
 )
 
 cursor.executemany(
