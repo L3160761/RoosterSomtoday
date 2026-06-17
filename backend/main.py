@@ -9,13 +9,20 @@ from rfid_reader import get_reader
 
 app = FastAPI(title="RFID Roosterscherm API", version="0.1.0")
 
-# CORS configuratie
+# CORS configuratie - alleen local en dashboard toegestaan
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:8000",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["X-API-Key", "Content-Type"],
 )
 
 # Logging configuratie (geen persoonsgegevens)
@@ -24,6 +31,7 @@ logger = logging.getLogger(__name__)
 
 DATABASE_PATH = "data/rooster.db"
 FAKE_SCHEDULE_PATH = "data/fake_schedule.json"
+ADMIN_API_KEY = "admin_key_pilot"
 
 def get_db():
     """Database verbinding"""
@@ -39,6 +47,12 @@ def load_fake_schedule():
     except Exception as e:
         logger.error(f"Fout bij laden roosterdata: {str(e)}")
         return {}
+
+def verify_admin_key(api_key: str = Header(None)):
+    """Verifieer admin API key"""
+    if not api_key or api_key != ADMIN_API_KEY:
+        raise HTTPException(status_code=401, detail="Ongeautoriseerd - Ongeldige API key")
+    return api_key
 
 def get_current_and_next_lesson(lessons, current_time_str):
     """Bepaal huidige en volgende les"""
@@ -98,7 +112,7 @@ def get_schedule_response(user_key):
 
 @app.get("/api/health")
 async def health_check():
-    """Health check endpoint"""
+    """Health check endpoint - publiek beschikbaar"""
     return {
         "status": "ok",
         "timestamp": datetime.now().isoformat(),
@@ -202,21 +216,23 @@ async def scan_hardware(timeout: int = 10):
     return response
 
 @app.post("/api/admin/map")
-async def add_mapping(mapping_data: dict, api_key: str = Header(None)):
+async def add_mapping(mapping_data: dict, api_key: str = Depends(verify_admin_key)):
     """
     Admin endpoint: voeg mapping toe
-    Requires: X-API-Key header
+    Requires: X-API-Key header met admin_key_pilot
     """
-    # Simpele key-check (in productie: echte authenticatie!)
-    if not api_key or api_key != "admin_key_pilot":
-        raise HTTPException(status_code=401, detail="Ongeautoriseerd")
-    
     tag_uid = mapping_data.get("tag_uid")
     user_key = mapping_data.get("user_key")
     display_name = mapping_data.get("display_name", user_key)
     
     if not tag_uid or not user_key:
         raise HTTPException(status_code=400, detail="tag_uid en user_key zijn verplicht")
+    
+    # Validatie: alleen bepaalde user_keys allowed
+    allowed_users = ["zine", "tom", "rekawt"]
+    if user_key not in allowed_users:
+        logger.warning(f"Poging om niet-toegestane user_key toe te voegen: {user_key}")
+        raise HTTPException(status_code=403, detail=f"User key '{user_key}' is niet toegestaan. Alleen: {', '.join(allowed_users)}")
     
     try:
         conn = get_db()
@@ -238,7 +254,7 @@ async def add_mapping(mapping_data: dict, api_key: str = Header(None)):
         conn.close()
         
         logger.info(f"Mapping toegevoegd: {tag_uid[:4]}... -> {user_key}")
-        return {"status": "ok", "message": "Mapping toegevoegd"}
+        return {"status": "ok", "message": f"Mapping toegevoegd voor {user_key}"}
     
     except Exception as e:
         logger.error(f"Fout bij toevoegen mapping: {str(e)}")
