@@ -385,7 +385,7 @@
     .timeline-marker {
       position: absolute;
       left: 0;
-      right: calc(-1 * clamp(58px, 4.2vw, 76px));
+      right: 0;
       z-index: 0;
       border-top: 1px solid rgba(183, 183, 183, 0.24);
       pointer-events: none;
@@ -394,9 +394,10 @@
     .timeline-time {
       position: absolute;
       top: 0;
-      right: 0;
+      right: calc(-1 * clamp(58px, 4.2vw, 76px));
       width: clamp(52px, 3.8vw, 68px);
-      padding-right: 2px;
+      padding: 0 2px 0 8px;
+      background: var(--right-panel);
       color: var(--muted);
       font-size: clamp(12px, 0.92vw, 17px);
       font-variant-numeric: tabular-nums;
