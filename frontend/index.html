@@ -356,25 +356,27 @@
     }
 
     .schedule-grid {
-      display: grid;
-      grid-template-rows: repeat(9, minmax(0, 1fr));
+      position: relative;
       height: calc(100% - clamp(54px, 6.6vh, 78px));
       margin-top: clamp(24px, 3vh, 34px);
     }
 
     .schedule-slot {
+      position: absolute;
+      left: 0;
+      right: 0;
       display: grid;
       grid-template-columns: 30px 1fr;
-      align-items: start;
+      align-items: stretch;
       gap: 14px;
       min-height: 0;
     }
 
-    .schedule-slot .period-number { padding-top: 31px; }
+    .schedule-slot .period-number { padding-top: 14px; }
 
     .schedule-slot .lesson-card {
       min-height: 0;
-      height: min(9.2vh, 96px);
+      height: 100%;
       padding-top: 10px;
       padding-bottom: 9px;
     }
@@ -456,7 +458,15 @@
     const API_ORIGIN = 'http://localhost:8000';
     const HARDWARE_SCAN_API_URL = `${API_ORIGIN}/api/scan-hardware`;
     const DEFAULT_TIMEOUT_SECONDS = 15;
-    const SLOT_COUNT = 9;
+    const TIMELINE_START_MINUTES = 8 * 60 + 30;
+    const TIMELINE_END_MINUTES = 16 * 60;
+    const PERIODS = [
+      { number: 1, start: '08:30', end: '09:45' },
+      { number: 2, start: '10:00', end: '11:15' },
+      { number: 3, start: '11:30', end: '12:45' },
+      { number: 4, start: '13:15', end: '14:30' },
+      { number: 5, start: '14:45', end: '16:00' },
+    ];
 
     const standbyScreen = document.getElementById('standbyScreen');
     const scheduleScreen = document.getElementById('scheduleScreen');
@@ -516,11 +526,29 @@
       return card;
     }
 
+    function timeToMinutes(value) {
+      const [hours, minutes] = String(value || '').split(':').map(Number);
+      return Number.isFinite(hours) && Number.isFinite(minutes)
+        ? hours * 60 + minutes
+        : TIMELINE_START_MINUTES;
+    }
+
+    function timelinePercent(value) {
+      const minutes = timeToMinutes(value);
+      const duration = TIMELINE_END_MINUTES - TIMELINE_START_MINUTES;
+      return Math.max(0, Math.min(100, (
+        (minutes - TIMELINE_START_MINUTES) / duration
+      ) * 100));
+    }
+
     function periodForLesson(lesson, lessons) {
       const explicitPeriod = Number(lesson?.period);
       if (Number.isInteger(explicitPeriod) && explicitPeriod > 0) {
         return explicitPeriod;
       }
+
+      const matchedPeriod = PERIODS.find((period) => period.start === lesson?.start);
+      if (matchedPeriod) return matchedPeriod.number;
 
       const index = lessons.findIndex((candidate) =>
         candidate.start === lesson?.start &&
@@ -534,26 +562,29 @@
       scheduleGrid.replaceChildren();
       const lessonsByPeriod = new Map(
         lessons.map((lesson, index) => [
-          Number.isInteger(Number(lesson.period))
-            ? Number(lesson.period)
-            : index + 1,
+          periodForLesson(lesson, lessons) || index + 1,
           lesson,
         ])
       );
 
-      for (let slot = 1; slot <= SLOT_COUNT; slot += 1) {
+      PERIODS.forEach((period) => {
+        const lesson = lessonsByPeriod.get(period.number);
+        const start = lesson?.start || period.start;
+        const end = lesson?.end || period.end;
+
         const row = document.createElement('div');
         row.className = 'schedule-slot';
+        row.style.top = `${timelinePercent(start)}%`;
+        row.style.height = `${timelinePercent(end) - timelinePercent(start)}%`;
 
         const number = document.createElement('div');
         number.className = 'period-number';
-        number.textContent = slot;
+        number.textContent = period.number;
         row.append(number);
 
-        const lesson = lessonsByPeriod.get(slot);
         if (lesson) row.append(createLessonCard(lesson));
         scheduleGrid.append(row);
-      }
+      });
     }
 
     function formatScheduleDate(value) {
