@@ -568,13 +568,6 @@
       });
     }
 
-    function createClockIcon() {
-      const icon = document.createElement('span');
-      icon.className = 'clock-icon';
-      icon.setAttribute('aria-hidden', 'true');
-      return icon;
-    }
-
     function createLessonCard(lesson) {
       const card = document.createElement('article');
       card.className = 'lesson-card';
@@ -589,7 +582,7 @@
 
       const pill = document.createElement('div');
       pill.className = 'time-pill';
-      pill.append(createClockIcon(), document.createTextNode(lesson.start || '--:--'));
+      pill.textContent = lesson.start || '--:--';
 
       card.append(subject, details, pill);
       return card;
