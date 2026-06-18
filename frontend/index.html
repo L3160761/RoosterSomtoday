@@ -556,6 +556,17 @@
       }
     }
 
+    function formatScheduleDate(value) {
+      if (!value) return '';
+      const scheduleDate = new Date(`${value}T12:00:00`);
+      const label = scheduleDate.toLocaleDateString('nl-NL', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+      });
+      return label.charAt(0).toUpperCase() + label.slice(1);
+    }
+
     function showSchedule(data) {
       clearTimeout(scanRetryTimeoutId);
       standbyScreen.style.display = 'none';
@@ -567,8 +578,9 @@
       nextPeriod.textContent = periodForLesson(featuredLesson, lessons);
       nextLessonHost.replaceChildren(createLessonCard(featuredLesson));
 
+      const scheduleDateLabel = formatScheduleDate(data.date);
       dayTime.textContent = lessons.length
-        ? `${lessons[0].start} - ${lessons[lessons.length - 1].end}`
+        ? `${scheduleDateLabel} • ${lessons[0].start} - ${lessons[lessons.length - 1].end}`
         : '-';
       renderSchedule(lessons);
       startScreenTimer(Number(data.ui?.timeout_seconds) || DEFAULT_TIMEOUT_SECONDS);
