@@ -9,20 +9,21 @@ from rfid_reader import get_reader
 
 app = FastAPI(title="RFID Roosterscherm API", version="0.1.0")
 
-# CORS configuratie - alleen local en dashboard toegestaan
+# CORS configuratie - alle origins in development
 ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:8000",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:8000",
+    "file://",  # Voor lokale HTML-bestanden
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=["*"],  # Sta alle origins toe in development
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
-    allow_headers=["X-API-Key", "Content-Type"],
+    allow_methods=["*"],  # Sta alle methods toe
+    allow_headers=["*"],  # Sta alle headers toe
 )
 
 # Logging configuratie (geen persoonsgegevens)
