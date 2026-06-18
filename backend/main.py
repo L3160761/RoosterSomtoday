@@ -72,54 +72,91 @@ def get_current_and_next_lesson(lessons, current_time_str):
     
     return current, next_lesson
 
+WEEKDAY_KEYS = [
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+]
+
+
+def select_upcoming_schedule(user_schedule, now):
+    """Selecteer vandaag of de eerstvolgende dag met lessen."""
+    weekday_schedules = user_schedule.get("weekdays")
+
+    if weekday_schedules:
+        # Acht dagen doorzoeken neemt ook dezelfde weekdag volgende week mee.
+        for day_offset in range(8):
+            schedule_date = now + timedelta(days=day_offset)
+            weekday_key = WEEKDAY_KEYS[schedule_date.weekday()]
+            lessons = weekday_schedules.get(weekday_key, {}).get("lessons", [])
+            if not lessons:
+                continue
+
+            if day_offset == 0:
+                last_end = max(
+                    (lesson.get("end", "") for lesson in lessons),
+                    default="",
+                )
+                if last_end and now.strftime("%H:%M") >= last_end:
+                    continue
+
+            return schedule_date, lessons
+
+        return None, []
+
+    # Bestaande roosters zonder weekdagen gelden dagelijks.
+    lessons = user_schedule.get("lessons", [])
+    if not lessons:
+        return None, []
+
+    last_end = max(
+        (lesson.get("end", "") for lesson in lessons),
+        default="",
+    )
+    schedule_date = now
+    if last_end and now.strftime("%H:%M") >= last_end:
+        schedule_date = now + timedelta(days=1)
+
+    return schedule_date, lessons
+
+
 def get_schedule_response(user_key):
-    """Bouw een schedule-response voor een user_key"""
-    # Laad het rooster voor de huidige weekdag. Oude gebruikers met een
-    # enkele lessons-lijst blijven ondersteund.
+    """Bouw een schedule-response voor vandaag of de volgende lesdag."""
     schedule_data = load_fake_schedule()
     now = datetime.now()
-    weekday_key = [
-        "monday",
-        "tuesday",
-        "wednesday",
-        "thursday",
-        "friday",
-        "saturday",
-        "sunday",
-    ][now.weekday()]
-
     user_schedule = schedule_data.get(user_key, {})
-    weekday_schedule = user_schedule.get("weekdays", {}).get(weekday_key)
-    if weekday_schedule is not None:
-        lessons = weekday_schedule.get("lessons", [])
-    else:
-        lessons = user_schedule.get("lessons", [])
+    schedule_date, lessons = select_upcoming_schedule(user_schedule, now)
 
-    if not lessons:
+    if not lessons or schedule_date is None:
         logger.warning(
-            f"Geen rooster gevonden voor user_key: {user_key} op {weekday_key}"
+            f"Geen aankomend rooster gevonden voor user_key: {user_key}"
         )
         return None
 
-    # Bepaal huidige en volgende les
-    current_time_str = now.strftime("%H:%M")
-    today_date = now.strftime("%Y-%m-%d")
-    
-    current_lesson, next_lesson = get_current_and_next_lesson(lessons, current_time_str)
-    
-    # Haal student display naam
+    is_today = schedule_date.date() == now.date()
+    comparison_time = now.strftime("%H:%M") if is_today else "00:00"
+    current_lesson, next_lesson = get_current_and_next_lesson(
+        lessons,
+        comparison_time,
+    )
+
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("SELECT display_name FROM students WHERE user_key = ?", (user_key,))
     student_result = cursor.fetchone()
     conn.close()
-    
-    display_name = student_result['display_name'] if student_result else user_key
-    
-    # Bouw response (screen-ready JSON)
-    response = {
+
+    display_name = student_result["display_name"] if student_result else user_key
+
+    return {
         "student_display": display_name,
-        "date": today_date,
+        "date": schedule_date.strftime("%Y-%m-%d"),
+        "schedule_day": WEEKDAY_KEYS[schedule_date.weekday()],
+        "is_today": is_today,
         "now": current_lesson if current_lesson else None,
         "next": next_lesson if next_lesson else None,
         "today": lessons,
@@ -127,8 +164,7 @@ def get_schedule_response(user_key):
             "timeout_seconds": 15
         }
     }
-    
-    return response
+
 
 @app.get("/api/health")
 async def health_check():
