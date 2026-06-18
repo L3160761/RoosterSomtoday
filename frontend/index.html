@@ -362,6 +362,26 @@
       margin-right: clamp(58px, 4.2vw, 76px);
     }
 
+    .schedule-grid::before,
+    .schedule-grid::after {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      z-index: 0;
+      width: 1px;
+      background: rgba(183, 183, 183, 0.3);
+      content: "";
+      pointer-events: none;
+    }
+
+    .schedule-grid::before {
+      left: 44px;
+    }
+
+    .schedule-grid::after {
+      right: 0;
+    }
+
     .timeline-marker {
       position: absolute;
       left: 0;
@@ -668,7 +688,7 @@
       scheduleScreen.classList.add('active');
 
       const lessons = Array.isArray(data.today) ? data.today : [];
-      const featuredLesson = data.now || data.next || lessons[0] || {};
+      const featuredLesson = data.next || data.now || lessons[0] || {};
       studentName.textContent = data.student_display || 'Gebruiker';
       nextPeriod.textContent = periodForLesson(featuredLesson, lessons);
       nextLessonHost.replaceChildren(createLessonCard(featuredLesson));
