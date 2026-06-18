@@ -106,7 +106,7 @@ def get_schedule_response(user_key):
         "next": next_lesson if next_lesson else None,
         "today": lessons,
         "ui": {
-            "timeout_seconds": 45
+            "timeout_seconds": 15
         }
     }
     
