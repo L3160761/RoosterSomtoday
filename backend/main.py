@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import logging
 import asyncio
 from rfid_reader import get_reader
+from uid_utils import normalize_tag_uid
 
 app = FastAPI(title="RFID Roosterscherm API", version="0.1.0")
 
@@ -128,11 +129,11 @@ async def scan_tag(tag_data: dict):
     Request: {"tag_uid": "04A1B23C9F"}
     Response: screen-ready JSON met rooster
     """
-    tag_uid = tag_data.get("tag_uid", "").strip()
-    
-    if not tag_uid:
-        logger.warning("Lege tag_uid ontvangen")
-        raise HTTPException(status_code=400, detail="Tag UID is verplicht")
+    try:
+        tag_uid = normalize_tag_uid(tag_data.get("tag_uid", ""))
+    except ValueError as exc:
+        logger.warning("Ongeldige tag_uid ontvangen")
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     
     # Zoek tag in database
     conn = get_db()
@@ -205,7 +206,7 @@ async def scan_hardware(timeout: int = 10):
     
     if not result:
         logger.info(f"Onbekende tag gescand: {tag_uid[:4]}...{tag_uid[-4:]}")
-        raise HTTPException(status_code=404, detail=f"Tag onbekend: {tag_uid}")
+        raise HTTPException(status_code=404, detail="Tag onbekend")
     
     user_key = result['user_key']
     response = get_schedule_response(user_key)
@@ -222,12 +223,16 @@ async def add_mapping(mapping_data: dict, api_key: str = Depends(verify_admin_ke
     Admin endpoint: voeg mapping toe
     Requires: X-API-Key header met admin_key_pilot
     """
-    tag_uid = mapping_data.get("tag_uid")
     user_key = mapping_data.get("user_key")
     display_name = mapping_data.get("display_name", user_key)
-    
-    if not tag_uid or not user_key:
-        raise HTTPException(status_code=400, detail="tag_uid en user_key zijn verplicht")
+
+    if not user_key:
+        raise HTTPException(status_code=400, detail="user_key is verplicht")
+
+    try:
+        tag_uid = normalize_tag_uid(mapping_data.get("tag_uid", ""))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     
     # Validatie: alleen bepaalde user_keys allowed
     allowed_users = ["zine", "tom", "rekawt"]
