@@ -29,6 +29,7 @@ cursor.executemany(
     "INSERT OR IGNORE INTO tags (tag_uid, user_key, active) VALUES (?, ?, 1)",
     [
         ("04A1B23C9F", "zine"),
+        ("682736746785", "zine"),
         ("12B4C56D8E", "tom"),
         ("99Z8Y7X6W5", "rekawt"),
     ],

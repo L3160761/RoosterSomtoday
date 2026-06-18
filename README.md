@@ -38,9 +38,10 @@ Backend draait dan op `http://localhost:8000`.
 Open `frontend/index.html` in je browser en voer een test tag-UID in.
 
 Testtags:
-- `04A1B23C9F` → wessel
-- `12B4C56D8E` → anna
-- `99Z8Y7X6W5` → thomas
+- `04A1B23C9F` → Zine-Eddine
+- `682736746785` → Zine-Eddine
+- `12B4C56D8E` → Tom
+- `99Z8Y7X6W5` → Rekawt
 
 ## Belangrijke documentatie (`docs/`)
 
