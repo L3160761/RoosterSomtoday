@@ -431,6 +431,7 @@
             background: #1e1e1e;
             color: #fff;
             margin-bottom: 8px;
+            font-size: 11px;
         }
 
         .test-controls button {
@@ -442,11 +443,23 @@
             border: none;
             cursor: pointer;
             font-size: 12px;
+            margin-bottom: 8px;
         }
 
         .test-controls button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+        }
+
+        .debug-info {
+            font-size: 10px;
+            color: #888;
+            background: rgba(0,0,0,0.5);
+            padding: 8px;
+            border-radius: 4px;
+            max-height: 100px;
+            overflow-y: auto;
+            margin-top: 8px;
         }
 
         @media (max-width: 1200px) {
@@ -556,8 +569,10 @@
     <!-- TEST CONTROLS (Hidden by default) -->
     <div class="test-controls" id="testControls">
         <label for="tagInput">Test tag-UID:</label>
-        <input id="tagInput" type="text" placeholder="bijv. 04A1B23C9F">
+        <input id="tagInput" type="text" placeholder="bijv. 04A1B23C9F" value="04A1B23C9F">
         <button id="scanButton">Test scan</button>
+        <button id="hardwareTestButton" style="background: #f39c12;">Hardware test</button>
+        <div class="debug-info" id="debugInfo"></div>
     </div>
 
     <script>
@@ -574,30 +589,34 @@
         const errorMessageEl = document.getElementById('errorMessage');
         const tagInput = document.getElementById('tagInput');
         const scanButton = document.getElementById('scanButton');
+        const hardwareTestButton = document.getElementById('hardwareTestButton');
         const timerOverlay = document.getElementById('timerOverlay');
         const scanningStatus = document.getElementById('scanningStatus');
+        const debugInfo = document.getElementById('debugInfo');
 
-        const isHttpProtocol = window.location.protocol === 'http:' || window.location.protocol === 'https:';
-        const currentProtocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
-        
-        // Hardware scan API (scan-hardware) en fallback voor manual scan (scan)
-        const HARDWARE_SCAN_API_URL = `${currentProtocol}//localhost:8000/api/scan-hardware`;
-        const FALLBACK_SCAN_API_URL = `${currentProtocol}//localhost:8000/api/scan`;
-        const SCAN_API_URL = window.SCAN_API_URL || (isHttpProtocol ? '/api/scan' : FALLBACK_SCAN_API_URL);
+        // API URL - always use localhost:8000 for backend
+        const SCAN_API_URL = 'http://localhost:8000/api/scan';
+        const HARDWARE_SCAN_API_URL = 'http://localhost:8000/api/scan-hardware';
         
         const DEFAULT_TIMEOUT_SECONDS = 15;
         const MIN_TIMEOUT_SECONDS = 5;
         const MAX_TIMEOUT_SECONDS = 300;
-        const HARDWARE_SCAN_TIMEOUT = 10; // 10 seconden voor hardware scan
 
         let standbyTimeoutId;
         let timerIntervalId;
         let isScanning = false;
         let isDevelopment = !window.location.hostname || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
+        function addDebugLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            debugInfo.innerHTML = `[${timestamp}] ${message}<br>` + debugInfo.innerHTML;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
         // Show test controls in development
         if (isDevelopment) {
             testControls.classList.add('show');
+            addDebugLog('Development mode - test controls visible');
         }
 
         // Update clock every second
@@ -692,6 +711,7 @@
             standbyScreen.style.display = 'none';
             timerOverlay.classList.remove('show');
             isScanning = false;
+            addDebugLog(`Error: ${message}`);
             
             // Return to standby after error timeout
             standbyTimeoutId = setTimeout(showStandby, 5000);
@@ -729,41 +749,8 @@
 
             const timeoutSeconds = validateTimeout(data.ui?.timeout_seconds);
             startTimer(timeoutSeconds);
-        }
-
-        async function scanHardware() {
-            if (isScanning) return;
             
-            isScanning = true;
-            scanningStatus.textContent = 'Aan het scannen...';
-            
-            try {
-                const response = await fetch(HARDWARE_SCAN_API_URL, {
-                    method: 'GET'
-                });
-
-                if (!response.ok) {
-                    if (response.status === 404) {
-                        console.log('Tag onbekend');
-                    } else if (response.status === 408) {
-                        console.log('Timeout - geen tag gescand');
-                    } else {
-                        console.error(`Fout bij hardware scan (status ${response.status})`);
-                    }
-                    // Herstart scanning na korte pauze
-                    isScanning = false;
-                    setTimeout(scanHardware, 500);
-                    return;
-                }
-
-                const data = await response.json();
-                showSchedule(data);
-            } catch (e) {
-                console.error('Hardware scan failed', { message: e?.message });
-                // Herstart scanning na korte pauze
-                isScanning = false;
-                setTimeout(scanHardware, 500);
-            }
+            addDebugLog(`✓ Rooster geladen voor ${data.student_display}`);
         }
 
         async function scanTag(tagUid) {
@@ -775,15 +762,22 @@
 
             scanButton.disabled = true;
             scanButton.textContent = 'Scannen...';
+            addDebugLog(`Scanning tag: ${trimmed}`);
 
             try {
+                addDebugLog(`POST ${SCAN_API_URL}`);
                 const response = await fetch(SCAN_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ tag_uid: trimmed })
                 });
 
+                addDebugLog(`Response status: ${response.status}`);
+
                 if (!response.ok) {
+                    const errorText = await response.text();
+                    addDebugLog(`Error response: ${errorText}`);
+                    
                     if (response.status === 404) {
                         showError('❌ Tag onbekend of rooster niet beschikbaar');
                     } else {
@@ -793,10 +787,12 @@
                 }
 
                 const data = await response.json();
+                addDebugLog(`✓ Response received with data`);
                 showSchedule(data);
             } catch (e) {
-                console.error('Scan failed', { message: e?.message });
-                showError('❌ Backend niet bereikbaar');
+                console.error('Scan failed', e);
+                addDebugLog(`❌ Exception: ${e.message}`);
+                showError(`❌ Backend niet bereikbaar - ${e.message}`);
             } finally {
                 scanButton.disabled = false;
                 scanButton.textContent = 'Test scan';
@@ -804,6 +800,18 @@
         }
 
         scanButton.addEventListener('click', () => scanTag(tagInput.value));
+        hardwareTestButton.addEventListener('click', async () => {
+            addDebugLog('Testing hardware endpoint...');
+            try {
+                const response = await fetch(HARDWARE_SCAN_API_URL);
+                addDebugLog(`Hardware test response: ${response.status}`);
+                const data = await response.json();
+                addDebugLog(`Hardware response: ${JSON.stringify(data)}`);
+            } catch (e) {
+                addDebugLog(`❌ Hardware test failed: ${e.message}`);
+            }
+        });
+
         tagInput.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
                 scanTag(tagInput.value);
@@ -814,9 +822,7 @@
         updateClock();
         setInterval(updateClock, 1000);
         showStandby();
-        
-        // Start hardware scanning automatically
-        scanHardware();
+        addDebugLog('Rooster Somtoday initialized');
     </script>
 </body>
 </html>
