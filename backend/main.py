@@ -74,16 +74,34 @@ def get_current_and_next_lesson(lessons, current_time_str):
 
 def get_schedule_response(user_key):
     """Bouw een schedule-response voor een user_key"""
-    # Laad roosterdata
+    # Laad het rooster voor de huidige weekdag. Oude gebruikers met een
+    # enkele lessons-lijst blijven ondersteund.
     schedule_data = load_fake_schedule()
-    lessons = schedule_data.get(user_key, {}).get('lessons', [])
-    
-    if not lessons:
-        logger.warning(f"Geen rooster gevonden voor user_key: {user_key}")
-        return None
-    
-    # Bepaal huidige en volgende les
     now = datetime.now()
+    weekday_key = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+    ][now.weekday()]
+
+    user_schedule = schedule_data.get(user_key, {})
+    weekday_schedule = user_schedule.get("weekdays", {}).get(weekday_key)
+    if weekday_schedule is not None:
+        lessons = weekday_schedule.get("lessons", [])
+    else:
+        lessons = user_schedule.get("lessons", [])
+
+    if not lessons:
+        logger.warning(
+            f"Geen rooster gevonden voor user_key: {user_key} op {weekday_key}"
+        )
+        return None
+
+    # Bepaal huidige en volgende les
     current_time_str = now.strftime("%H:%M")
     today_date = now.strftime("%Y-%m-%d")
     

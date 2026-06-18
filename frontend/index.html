@@ -517,6 +517,11 @@
     }
 
     function periodForLesson(lesson, lessons) {
+      const explicitPeriod = Number(lesson?.period);
+      if (Number.isInteger(explicitPeriod) && explicitPeriod > 0) {
+        return explicitPeriod;
+      }
+
       const index = lessons.findIndex((candidate) =>
         candidate.start === lesson?.start &&
         candidate.end === lesson?.end &&
@@ -527,6 +532,15 @@
 
     function renderSchedule(lessons) {
       scheduleGrid.replaceChildren();
+      const lessonsByPeriod = new Map(
+        lessons.map((lesson, index) => [
+          Number.isInteger(Number(lesson.period))
+            ? Number(lesson.period)
+            : index + 1,
+          lesson,
+        ])
+      );
+
       for (let slot = 1; slot <= SLOT_COUNT; slot += 1) {
         const row = document.createElement('div');
         row.className = 'schedule-slot';
@@ -536,7 +550,7 @@
         number.textContent = slot;
         row.append(number);
 
-        const lesson = lessons[slot - 1];
+        const lesson = lessonsByPeriod.get(slot);
         if (lesson) row.append(createLessonCard(lesson));
         scheduleGrid.append(row);
       }

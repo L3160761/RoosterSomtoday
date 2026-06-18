@@ -1,26 +1,126 @@
 {
   "tom": {
     "lessons": [
-      { "start": "08:30", "end": "09:45", "subject": "academische vaardigheden", "room": "127", "teacher": "Mw. Leemreize", "status": "normal" },
-      { "start": "10:00", "end": "11:15", "subject": "Wiskunde", "room": "403", "teacher": "Dhr. Saïdi", "status": "normal" },
-      { "start": "11:30", "end": "12:45", "subject": "O&O", "room": "506", "teacher": "Dhr. Van de Ende", "status": "normal" },
-      { "start": "13:15", "end": "14:30", "subject": "Natuurkunde", "room": "505", "teacher": "Dhr. Hamelinck", "status": "normal" },
-      { "start": "14:45", "end": "16:00", "subject": "Bedrijfseconomie", "room": "202", "teacher": "Dhr. Vroom", "status": "normal" }
+      {
+        "start": "08:30",
+        "end": "09:45",
+        "subject": "academische vaardigheden",
+        "room": "127",
+        "teacher": "Mw. Leemreize",
+        "status": "normal"
+      },
+      {
+        "start": "10:00",
+        "end": "11:15",
+        "subject": "Wiskunde",
+        "room": "403",
+        "teacher": "Dhr. Saïdi",
+        "status": "normal"
+      },
+      {
+        "start": "11:30",
+        "end": "12:45",
+        "subject": "O&O",
+        "room": "506",
+        "teacher": "Dhr. Van de Ende",
+        "status": "normal"
+      },
+      {
+        "start": "13:15",
+        "end": "14:30",
+        "subject": "Natuurkunde",
+        "room": "505",
+        "teacher": "Dhr. Hamelinck",
+        "status": "normal"
+      },
+      {
+        "start": "14:45",
+        "end": "16:00",
+        "subject": "Bedrijfseconomie",
+        "room": "202",
+        "teacher": "Dhr. Vroom",
+        "status": "normal"
+      }
     ]
   },
   "zine": {
-    "lessons": [
-      { "start": "08:30", "end": "09:45", "subject": "academische vaardigheden", "room": "127", "teacher": "Mw. Leemreize", "status": "normal" },
-      { "start": "11:30", "end": "12:45", "subject": "O&O", "room": "506", "teacher": "Dhr. Van de Ende", "status": "normal" },
-      { "start": "13:15", "end": "14:30", "subject": "Natuurkunde", "room": "505", "teacher": "Dhr. Hamelinck", "status": "normal" }
-    ]
+    "weekdays": {
+      "friday": {
+        "lessons": [
+          {
+            "period": 1,
+            "start": "08:30",
+            "end": "09:45",
+            "subject": "academische vaardigheden",
+            "room": "127",
+            "teacher": "",
+            "status": "normal"
+          },
+          {
+            "period": 3,
+            "start": "11:30",
+            "end": "12:45",
+            "subject": "onderzoek en ontwerpen",
+            "room": "506",
+            "teacher": "",
+            "status": "normal"
+          },
+          {
+            "period": 4,
+            "start": "13:15",
+            "end": "14:30",
+            "subject": "natuurkunde",
+            "room": "505",
+            "teacher": "",
+            "status": "normal"
+          },
+          {
+            "period": 5,
+            "start": "14:45",
+            "end": "16:00",
+            "subject": "wiskunde B",
+            "room": "402",
+            "teacher": "",
+            "status": "normal"
+          }
+        ]
+      }
+    }
   },
   "rekawt": {
     "lessons": [
-     { "start": "08:30", "end": "09:45", "subject": "academische vaardigheden", "room": "127", "teacher": "Mw. Leemreize", "status": "normal" },
-      { "start": "11:30", "end": "12:45", "subject": "O&O", "room": "506", "teacher": "Dhr. Van de Ende", "status": "normal" },
-      { "start": "13:15", "end": "14:30", "subject": "Natuurkunde", "room": "505", "teacher": "Dhr. Hamelinck", "status": "normal" },
-      { "start": "14:45", "end": "16:00", "subject": "Bedrijfseconomie", "room": "202", "teacher": "Dhr. Vroom", "status": "normal" }
+      {
+        "start": "08:30",
+        "end": "09:45",
+        "subject": "academische vaardigheden",
+        "room": "127",
+        "teacher": "Mw. Leemreize",
+        "status": "normal"
+      },
+      {
+        "start": "11:30",
+        "end": "12:45",
+        "subject": "O&O",
+        "room": "506",
+        "teacher": "Dhr. Van de Ende",
+        "status": "normal"
+      },
+      {
+        "start": "13:15",
+        "end": "14:30",
+        "subject": "Natuurkunde",
+        "room": "505",
+        "teacher": "Dhr. Hamelinck",
+        "status": "normal"
+      },
+      {
+        "start": "14:45",
+        "end": "16:00",
+        "subject": "Bedrijfseconomie",
+        "room": "202",
+        "teacher": "Dhr. Vroom",
+        "status": "normal"
+      }
     ]
   }
 }
