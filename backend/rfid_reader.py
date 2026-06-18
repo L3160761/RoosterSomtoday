@@ -22,7 +22,7 @@ READER_INSTANCE = None
 
 try:
     import RPi.GPIO as GPIO
-    from pirc522 import PIRC522
+    from pirc522 import RFID
     IS_RASPBERRY_PI = True
     logger.info("✓ Raspberry Pi GPIO gedetecteerd - RC522 hardware-mode actief")
 except ImportError as e:
@@ -85,13 +85,23 @@ class RC522Reader:
             GPIO.setmode(GPIO.BCM)
             GPIO.setwarnings(False)
             
-            # Initialiseer PIRC522
-            logger.debug(f"→ Initialiseren PIRC522 (RST={self.rst_pin}, CS={self.cs_pin})")
-            self.rdr = PIRC522(GPIO_RST=self.rst_pin, GPIO_IRQ=None)
-            
-            # Test initialisatie
-            self.rdr.MFRC522_Init()
-            
+            # GPIO8 is SPI CE0; GPIO7 is SPI CE1.
+            spi_device = {8: 0, 7: 1}.get(self.cs_pin)
+            if spi_device is None:
+                raise ValueError("CS/SDA moet GPIO8 (CE0) of GPIO7 (CE1) zijn")
+
+            # IRQ is niet aangesloten, dus lees de kaart via polling.
+            logger.debug(
+                f"→ Initialiseren RFID (RST={self.rst_pin}, CS={self.cs_pin})"
+            )
+            self.rdr = RFID(
+                bus=0,
+                device=spi_device,
+                pin_rst=self.rst_pin,
+                pin_irq=None,
+                pin_mode=GPIO.BCM,
+            )
+
             self.hardware_available = True
             logger.info(f"✓ RC522 succesvol geïnitialiseerd")
             logger.info(f"  RST pin: GPIO{self.rst_pin} (fysiek pin 22)")
@@ -113,85 +123,57 @@ class RC522Reader:
             self.hardware_available = False
     
     def read_tag(self, timeout=10):
-        """
-        Lees een RFID-tag
-        
-        Args:
-            timeout: Maximale wachttijd in seconden
-            
-        Returns:
-            Tag UID als string (bijv. "04A1B23C9F") of None als timeout/fout
-            
-        Flow:
-        1. Wacht op tag binnenbereik
-        2. Stuurt SELECT-commando naar tag
-        3. Haalt unieke identifier op
-        4. Retourneert als hex-string
-        """
+        """Read only the UID of a tag; never read or write tag memory."""
         if not self.hardware_available:
             logger.debug("✗ Hardware niet beschikbaar - retourneer None")
             return None
-        
-        try:
-            start_time = time.time()
-            loop_count = 0
-            
-            while (time.time() - start_time) < timeout:
-                loop_count += 1
-                
-                try:
-                    # Stap 1: Wacht op tag
-                    self.rdr.wait_for_tag()
-                    
-                    # Stap 2: Stuur REQUEST naar tag
-                    (error, tag_type) = self.rdr.request()
-                    
-                    if not error:
-                        # Stap 3: Bepaal tag UID (anti-collision)
-                        (error, uid) = self.rdr.anticoll()
-                        
-                        if not error:
-                            # Stap 4: Formateer UID als hex-string
-                            # UID is meestal [byte1, byte2, byte3, byte4, checksum]
-                            # We gebruiken de eerste 4 bytes
-                            tag_uid = ''.join([f'{x:02X}' for x in uid[:4]])
-                            
-                            # Debounce: voorkom dubbele scans
-                            current_time = time.time()
-                            if (tag_uid == self.last_uid and 
-                                (current_time - self.last_scan_time) < self.debounce_seconds):
-                                logger.debug(f"⊘ Debounce: {tag_uid} genegeerd (recent gescand)")
-                                time.sleep(0.1)
-                                continue
-                            
-                            # Succesvol gescand
-                            self.last_uid = tag_uid
-                            self.last_scan_time = current_time
-                            
-                            logger.info(f"✓ Tag gescand: {tag_uid}")
-                            return tag_uid
-                    else:
-                        logger.debug(f"✗ Request error: {error}")
-                
-                except Exception as inner_e:
-                    logger.debug(f"✗ Loop exception: {type(inner_e).__name__}: {inner_e}")
+
+        start_time = time.monotonic()
+        loop_count = 0
+
+        while (time.monotonic() - start_time) < timeout:
+            loop_count += 1
+
+            try:
+                # read_id polls the reader and supports both 4- and 7-byte UIDs.
+                uid = self.rdr.read_id()
+                if uid is None:
                     time.sleep(0.05)
                     continue
-                
+
+                tag_uid = "".join(f"{byte:02X}" for byte in uid)
+                current_time = time.monotonic()
+
+                if (
+                    tag_uid == self.last_uid
+                    and current_time - self.last_scan_time < self.debounce_seconds
+                ):
+                    logger.debug(
+                        f"⊘ Debounce: {tag_uid} genegeerd (recent gescand)"
+                    )
+                    time.sleep(0.1)
+                    continue
+
+                self.last_uid = tag_uid
+                self.last_scan_time = current_time
+                logger.info(f"✓ Tag gescand: {tag_uid[:4]}...{tag_uid[-4:]}")
+                return tag_uid
+            except Exception as exc:
+                logger.debug(
+                    f"✗ Leesfout: {type(exc).__name__}: {exc}"
+                )
                 time.sleep(0.05)
-            
-            logger.warning(f"✗ Timeout bereikt na {timeout}s ({loop_count} loops)")
-            return None
-        
-        except Exception as e:
-            logger.error(f"✗ Kritieke fout bij lezen tag: {type(e).__name__}: {e}")
-            return None
-    
+
+        logger.warning(
+            f"✗ Timeout bereikt na {timeout}s ({loop_count} pogingen)"
+        )
+        return None
+
     def cleanup(self):
         """Ruim GPIO op"""
         try:
             if IS_RASPBERRY_PI and self.rdr:
-                GPIO.cleanup()
+                self.rdr.cleanup()
                 logger.info("✓ GPIO opgeruimd")
         except Exception as e:
             logger.error(f"✗ Fout bij GPIO cleanup: {e}")
