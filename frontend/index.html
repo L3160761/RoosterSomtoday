@@ -547,6 +547,7 @@
 
         let standbyTimeoutId;
         let timerIntervalId;
+        let scanRetryTimeoutId;
         let isScanning = false;
         let isDevelopment = !window.location.hostname || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
@@ -635,6 +636,11 @@
             return `${first} - ${last}`;
         }
 
+        function queueHardwareScan(delay = 250) {
+            clearTimeout(scanRetryTimeoutId);
+            scanRetryTimeoutId = setTimeout(scanHardware, delay);
+        }
+
         function showStandby() {
             clearTimeout(standbyTimeoutId);
             clearInterval(timerIntervalId);
@@ -643,6 +649,7 @@
             errorMessageEl.classList.remove('show');
             timerOverlay.classList.remove('show');
             isScanning = false;
+            queueHardwareScan();
         }
 
         function showError(message) {
@@ -711,7 +718,7 @@
                 if (!response.ok) {
                     isScanning = false;
                     // Stille retry na korte pauze
-                    setTimeout(scanHardware, 1000);
+                    queueHardwareScan(1000);
                     return;
                 }
 
@@ -722,7 +729,7 @@
                 console.error('Hardware scan failed', e);
                 isScanning = false;
                 // Stille retry na korte pauze
-                setTimeout(scanHardware, 1000);
+                queueHardwareScan(1000);
             }
         }
 
@@ -732,8 +739,7 @@
         showStandby();
         addDebugLog('RoosterSomtoday gereed - Wachten op RFID scan...');
         
-        // Start hardware scanning automatically
-        scanHardware();
+        // showStandby() starts hardware scanning automatically.
     </script>
 </body>
 </html>
