@@ -25,6 +25,8 @@
         .container {
             width: 100%;
             max-width: 1400px;
+            display: flex;
+            justify-content: center;
         }
 
         /* ===== STANDBY SCREEN ===== */
@@ -150,15 +152,18 @@
             min-height: 100vh;
             padding: 40px 20px;
             position: relative;
+            width: 100%;
         }
 
         .schedule-screen.active {
             display: flex;
-            gap: 40px;
+            justify-content: center;
+            align-items: flex-start;
         }
 
-        .left-panel {
-            flex: 0 0 400px;
+        .center-panel {
+            width: 100%;
+            max-width: 900px;
             display: flex;
             flex-direction: column;
             gap: 30px;
@@ -178,7 +183,7 @@
         }
 
         .welcome-name {
-            font-size: 42px;
+            font-size: 56px;
             font-weight: 700;
             color: #64b5f6;
         }
@@ -207,20 +212,20 @@
         }
 
         .lesson-subject {
-            font-size: 32px;
+            font-size: 40px;
             font-weight: 700;
             margin-bottom: 10px;
             color: #fff;
         }
 
         .lesson-info {
-            font-size: 16px;
+            font-size: 18px;
             color: #d0d0d0;
             line-height: 1.6;
         }
 
         .lesson-time {
-            font-size: 20px;
+            font-size: 22px;
             color: #64b5f6;
             font-weight: 600;
             margin-top: 12px;
@@ -231,7 +236,7 @@
         }
 
         .time-icon {
-            font-size: 18px;
+            font-size: 20px;
         }
 
         .no-lesson {
@@ -244,26 +249,29 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 16px;
             padding: 25px;
+            text-align: center;
         }
 
         .daginfo-content {
-            font-size: 18px;
+            font-size: 24px;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 12px;
         }
 
         .daginfo-time {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 600;
             color: #64b5f6;
         }
 
         /* RIGHT PANEL - DAGROOSTER */
-        .right-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
+        .dagrooster-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 25px;
         }
 
         .dagrooster-title {
@@ -271,15 +279,15 @@
             font-weight: 700;
             margin-bottom: 20px;
             color: #fff;
+            text-align: center;
         }
 
         .lessons-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
+            max-height: 400px;
             overflow-y: auto;
-            max-height: calc(100vh - 120px);
-            padding-right: 10px;
         }
 
         .lessons-list::-webkit-scrollbar {
@@ -395,7 +403,6 @@
 
         .error-message.show {
             display: block;
-            grid-column: 1 / -1;
         }
 
         /* ===== CONTROLS (TEST SCAN) ===== */
@@ -407,86 +414,30 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             padding: 20px;
             border-radius: 12px;
-            max-width: 300px;
+            max-width: 350px;
             display: none;
             z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
         .test-controls.show {
             display: block;
         }
 
-        .test-controls label {
-            display: block;
-            font-size: 12px;
-            margin-bottom: 8px;
-            color: #b0b0b0;
-        }
-
-        .test-controls input {
-            width: 100%;
-            padding: 8px;
-            border-radius: 6px;
-            border: 1px solid #333;
-            background: #1e1e1e;
-            color: #fff;
-            margin-bottom: 8px;
-            font-size: 11px;
-        }
-
-        .test-controls button {
-            width: 100%;
-            padding: 8px;
-            border-radius: 6px;
-            background: #2d6cdf;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            font-size: 12px;
-            margin-bottom: 8px;
-        }
-
-        .test-controls button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
         .debug-info {
             font-size: 10px;
             color: #888;
-            background: rgba(0,0,0,0.5);
-            padding: 8px;
-            border-radius: 4px;
-            max-height: 100px;
-            overflow-y: auto;
-            margin-top: 8px;
-        }
-
-        @media (max-width: 1200px) {
-            .schedule-screen.active {
-                flex-direction: column;
-            }
-
-            .left-panel {
-                flex: 1 1 auto;
-            }
-
-            .right-panel {
-                flex: 1 1 auto;
-            }
+            line-height: 1.4;
         }
 
         @media (max-width: 768px) {
-            .left-panel {
-                flex: 0 0 auto;
-            }
-
             .welcome-name {
-                font-size: 28px;
+                font-size: 40px;
             }
 
             .lesson-subject {
-                font-size: 24px;
+                font-size: 28px;
             }
 
             .lesson-item {
@@ -522,8 +473,8 @@
             <!-- TIMER OVERLAY -->
             <div class="timer-overlay" id="timerOverlay"></div>
 
-            <!-- LEFT PANEL -->
-            <div class="left-panel">
+            <!-- CENTER PANEL -->
+            <div class="center-panel">
                 <!-- Welcome Section -->
                 <div class="welcome-section">
                     <div class="welcome-text">Welkom,</div>
@@ -532,47 +483,43 @@
 
                 <!-- Next Lesson Section -->
                 <div class="next-lesson-section">
-                    <div class="section-title">Volgende les</div>
+                    <div class="section-title">Huidige / Volgende les</div>
                     <div class="next-lesson-card" id="nextLessonCard">
                         <div class="lesson-subject">Nederlands</div>
                         <div class="lesson-info">
-                            abc123 • jdk
+                            Kamer 127 • Mw. Leemreize
                         </div>
                         <div class="lesson-time">
                             <span class="time-icon">🕐</span>
-                            <span>10:00</span>
+                            <span>08:30 - 09:45</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Daginfo Section -->
                 <div class="daginfo-section">
-                    <div class="section-title">Daginfo</div>
+                    <div class="section-title">Schooldag</div>
                     <div class="daginfo-content">
                         <span class="time-icon">🕐</span>
-                        <span class="daginfo-time" id="daginfo">8:30 - 12:45</span>
+                        <span class="daginfo-time" id="daginfo">8:30 - 16:00</span>
                     </div>
                 </div>
-            </div>
 
-            <!-- RIGHT PANEL - DAGROOSTER -->
-            <div class="right-panel">
-                <div class="dagrooster-title">Dagrooster</div>
-                <div class="error-message" id="errorMessage"></div>
-                <div class="lessons-list" id="lessonsList">
-                    <!-- Lessons will be inserted here -->
+                <!-- Dagrooster Section -->
+                <div class="dagrooster-section">
+                    <div class="dagrooster-title">Volledig Dagschema</div>
+                    <div class="error-message" id="errorMessage"></div>
+                    <div class="lessons-list" id="lessonsList">
+                        <!-- Lessons will be inserted here -->
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- TEST CONTROLS (Hidden by default) -->
+    <!-- DEBUG CONTROLS (Hidden by default) -->
     <div class="test-controls" id="testControls">
-        <label for="tagInput">Test tag-UID:</label>
-        <input id="tagInput" type="text" placeholder="bijv. 04A1B23C9F" value="04A1B23C9F">
-        <button id="scanButton">Test scan</button>
-        <button id="hardwareTestButton" style="background: #f39c12;">Hardware test</button>
-        <div class="debug-info" id="debugInfo"></div>
+        <div class="debug-info" id="debugInfo">Debug log...</div>
     </div>
 
     <script>
@@ -584,12 +531,8 @@
         const studentNameEl = document.getElementById('studentName');
         const nextLessonCardEl = document.getElementById('nextLessonCard');
         const lessonsList = document.getElementById('lessonsList');
-        const dagorosterTitle = document.querySelector('.dagrooster-title');
         const daginfoEl = document.getElementById('daginfo');
         const errorMessageEl = document.getElementById('errorMessage');
-        const tagInput = document.getElementById('tagInput');
-        const scanButton = document.getElementById('scanButton');
-        const hardwareTestButton = document.getElementById('hardwareTestButton');
         const timerOverlay = document.getElementById('timerOverlay');
         const scanningStatus = document.getElementById('scanningStatus');
         const debugInfo = document.getElementById('debugInfo');
@@ -598,7 +541,7 @@
         const SCAN_API_URL = 'http://localhost:8000/api/scan';
         const HARDWARE_SCAN_API_URL = 'http://localhost:8000/api/scan-hardware';
         
-        const DEFAULT_TIMEOUT_SECONDS = 15;
+        const DEFAULT_TIMEOUT_SECONDS = 45;
         const MIN_TIMEOUT_SECONDS = 5;
         const MAX_TIMEOUT_SECONDS = 300;
 
@@ -616,7 +559,7 @@
         // Show test controls in development
         if (isDevelopment) {
             testControls.classList.add('show');
-            addDebugLog('Development mode - test controls visible');
+            addDebugLog('Development mode - debug console visible');
         }
 
         // Update clock every second
@@ -657,7 +600,7 @@
                 </div>
                 <div class="lesson-time">
                     <span class="time-icon">🕐</span>
-                    <span>${escapeHtml(lesson.start)}</span>
+                    <span>${escapeHtml(lesson.start)} - ${escapeHtml(lesson.end)}</span>
                 </div>
             `;
         }
@@ -677,7 +620,7 @@
                     </div>
                     <div class="lesson-item-time">
                         <span class="time-icon">🕐</span>
-                        <span>${escapeHtml(lesson.start)}</span>
+                        <span>${escapeHtml(lesson.start)} - ${escapeHtml(lesson.end)}</span>
                     </div>
                 </div>
             `).join('');
@@ -711,7 +654,7 @@
             standbyScreen.style.display = 'none';
             timerOverlay.classList.remove('show');
             isScanning = false;
-            addDebugLog(`Error: ${message}`);
+            addDebugLog(`❌ ${message}`);
             
             // Return to standby after error timeout
             standbyTimeoutId = setTimeout(showStandby, 5000);
@@ -743,7 +686,11 @@
             errorMessageEl.classList.remove('show');
 
             studentNameEl.textContent = escapeHtml(data.student_display || 'Gebruiker');
-            nextLessonCardEl.innerHTML = formatNextLessonCard(data.next);
+            
+            // Show current lesson or next lesson
+            const lessonToShow = data.now || data.next;
+            nextLessonCardEl.innerHTML = formatNextLessonCard(lessonToShow);
+            
             renderLessonsList(data.today);
             daginfoEl.textContent = calculateDayInfo(data.today);
 
@@ -753,76 +700,40 @@
             addDebugLog(`✓ Rooster geladen voor ${data.student_display}`);
         }
 
-        async function scanTag(tagUid) {
-            const trimmed = tagUid.trim();
-            if (!trimmed) {
-                showError('Voer eerst een tag-UID in');
-                return;
-            }
-
-            scanButton.disabled = true;
-            scanButton.textContent = 'Scannen...';
-            addDebugLog(`Scanning tag: ${trimmed}`);
+        async function scanHardware() {
+            if (isScanning) return;
+            
+            isScanning = true;
 
             try {
-                addDebugLog(`POST ${SCAN_API_URL}`);
-                const response = await fetch(SCAN_API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tag_uid: trimmed })
-                });
-
-                addDebugLog(`Response status: ${response.status}`);
+                const response = await fetch(HARDWARE_SCAN_API_URL);
 
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    addDebugLog(`Error response: ${errorText}`);
-                    
-                    if (response.status === 404) {
-                        showError('❌ Tag onbekend of rooster niet beschikbaar');
-                    } else {
-                        showError(`❌ Fout bij ophalen rooster (status ${response.status})`);
-                    }
+                    isScanning = false;
+                    // Stille retry na korte pauze
+                    setTimeout(scanHardware, 1000);
                     return;
                 }
 
                 const data = await response.json();
-                addDebugLog(`✓ Response received with data`);
+                addDebugLog(`✓ RFID tag gescand: ${data.student_display}`);
                 showSchedule(data);
             } catch (e) {
-                console.error('Scan failed', e);
-                addDebugLog(`❌ Exception: ${e.message}`);
-                showError(`❌ Backend niet bereikbaar - ${e.message}`);
-            } finally {
-                scanButton.disabled = false;
-                scanButton.textContent = 'Test scan';
+                console.error('Hardware scan failed', e);
+                isScanning = false;
+                // Stille retry na korte pauze
+                setTimeout(scanHardware, 1000);
             }
         }
-
-        scanButton.addEventListener('click', () => scanTag(tagInput.value));
-        hardwareTestButton.addEventListener('click', async () => {
-            addDebugLog('Testing hardware endpoint...');
-            try {
-                const response = await fetch(HARDWARE_SCAN_API_URL);
-                addDebugLog(`Hardware test response: ${response.status}`);
-                const data = await response.json();
-                addDebugLog(`Hardware response: ${JSON.stringify(data)}`);
-            } catch (e) {
-                addDebugLog(`❌ Hardware test failed: ${e.message}`);
-            }
-        });
-
-        tagInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                scanTag(tagInput.value);
-            }
-        });
 
         // Initialize
         updateClock();
         setInterval(updateClock, 1000);
         showStandby();
-        addDebugLog('Rooster Somtoday initialized');
+        addDebugLog('RoosterSomtoday gereed - Wachten op RFID scan...');
+        
+        // Start hardware scanning automatically
+        scanHardware();
     </script>
 </body>
 </html>
